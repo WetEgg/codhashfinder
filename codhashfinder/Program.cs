@@ -36,6 +36,8 @@ class CODHashFinder
             
             3 - Images
 
+                31 - Textures from Materials
+
             4 - Materials
 
             5 - Models
@@ -89,6 +91,12 @@ class CODHashFinder
                         case "22":
                         {
                             T10AnimPackages();
+
+                            break;
+                        }
+                        case "31":
+                        {
+                            MaterialsToImages();
 
                             break;
                         }
@@ -153,6 +161,31 @@ class CODHashFinder
         return String.Format("{0:x}", result & 0xFFFFFFFFFFFFFFF);
     }
 
+    static string PickGame()
+    {
+        for(;;)
+        {
+            Console.WriteLine("JUP or T10?\n\n");
+
+            string? userResponse = Console.ReadLine();
+
+            switch(userResponse)
+            {
+                case "t10":
+                case "T10":
+                {
+                    return "T10";
+                }
+                case "jup":
+                case "Jup":
+                case "JUP":
+                {
+                    return "JUP";
+                }
+            }
+        }
+    }
+
     static void JUPAnims()
     {
         Console.WriteLine("Generating JUP Anim Hashes:\n");
@@ -168,8 +201,6 @@ class CODHashFinder
         }
 
         using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt");
-
-        var options = new ParallelOptions{MaxDegreeOfParallelism = 8};
 
         string[] foundHashes = [];
 
@@ -222,8 +253,6 @@ class CODHashFinder
 
         using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt");
 
-        var options = new ParallelOptions{MaxDegreeOfParallelism = 8};
-
         string[] foundHashes = [];
 
         Parallel.ForEach(T10VMTypes, animType =>
@@ -269,35 +298,46 @@ class CODHashFinder
         
     }
 
+    static void MaterialsToImages()
+    {
+        string game = PickGame();
+
+        Console.WriteLine("Generating Image names from Materials:\n");
+
+        string[] ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "AnimAssetLog.txt");
+        string[] MaterialNames = File.ReadAllLines(@"Files\Images\MaterialNames.txt");
+        string[] TextureTypes = File.ReadAllLines(@"Files\Images\TextureNames.txt");
+
+        string[] foundHashes = [];
+
+        Parallel.ForEach(MaterialNames, materialName =>
+        {
+            Parallel.ForEach(TextureTypes, textureType =>
+            {
+                string stringedName = materialName + "_" + textureType;
+                string generatedHash = CalcHash(stringedName);
+
+                if(Globals.DebugToggle)
+                {
+                    Console.WriteLine(stringedName);
+                }
+
+                Parallel.ForEach(ImageAssetLog, hash =>
+                {
+                    if(generatedHash == hash)
+                    {
+                        string fullHash = generatedHash + "," + stringedName;
+                        foundHashes = foundHashes.Append(fullHash).ToArray();
+                        Console.WriteLine(fullHash);
+                    }
+                });
+            });
+        });
+    }
+
     static void AssetLogs()
     {
-        Console.WriteLine("Generate JUP or T10 Asset Logs?\n\n");
-
-        string? userResponse = Console.ReadLine();
-        string game = "";
-
-        switch(userResponse)
-        {
-            case "t10":
-            case "T10":
-            {
-                game = "T10";
-
-                break;   
-            }
-            case "jup":
-            case "Jup":
-            case "JUP":
-            {
-                game = "JUP";
-
-                break;
-            }
-            default:
-            {
-                return;
-            }
-        }
+        string game = PickGame();
 
         System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "AnimAssetLog.txt",string.Empty);
         System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "AnimAssetLogForUnhashing.txt",string.Empty);
@@ -328,7 +368,6 @@ class CODHashFinder
 
         using StreamWriter SoundAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "SoundAssetLog.txt");
         using StreamWriter SoundAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "SoundAssetLogForUnhashing.txt");
-
 
         foreach(string hash in AssetLog)
         {
