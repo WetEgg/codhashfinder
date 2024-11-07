@@ -1,0 +1,15 @@
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\bin\Release\net8.0\codhashfinder.exe
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\bin\Release\net8.0\codhashfinder.deps.json
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\bin\Release\net8.0\codhashfinder.runtimeconfig.json
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\bin\Release\net8.0\codhashfinder.dll
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\bin\Release\net8.0\codhashfinder.pdb
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\codhashfinder.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\codhashfinder.AssemblyInfoInputs.cache
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\codhashfinder.AssemblyInfo.cs
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\codhashfinder.csproj.CoreCompileInputs.cache
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\codhashfinder.sourcelink.json
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\codhashfinder.dll
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\refint\codhashfinder.dll
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\codhashfinder.pdb
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\codhashfinder.genruntimeconfig.cache
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net8.0\ref\codhashfinder.dll
