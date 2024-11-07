@@ -46,6 +46,8 @@ class CODHashFinder
 
             9 - Miscellanious
 
+                91 - Asset Logs
+
                 99 - Toggle Debug
 
             "
@@ -90,6 +92,12 @@ class CODHashFinder
 
                             break;
                         }
+                        case "91":
+                        {
+                            AssetLogs();
+
+                            break;
+                        }
                         case "Debug":
                         case "99":
                         {
@@ -126,6 +134,25 @@ class CODHashFinder
         return String.Format("{0:x}", result & 0xFFFFFFFFFFFFFFF);
     }
 
+    static string CalcHashLegacy(string data)
+    {
+        ulong result = 0xCBF29CE484222325;
+
+        for(int i = 0; i < Encoding.UTF8.GetByteCount( data ); i++)
+        {
+            ulong value = data[i];
+
+            if(value == '\\')
+            {
+                value = '/';
+            }
+
+            result = 0x100000001B3 * (value ^ result);
+        }
+
+        return String.Format("{0:x}", result & 0xFFFFFFFFFFFFFFF);
+    }
+
     static void JUPAnims()
     {
         Console.WriteLine("Generating JUP Anim Hashes:\n");
@@ -136,12 +163,15 @@ class CODHashFinder
 
         if(!File.Exists(@"Files\GeneratedHashesAnims.txt"))
         {
-            File.Create(@"Files\GeneratedHashesAnims.txt");
+            var file = File.Create(@"Files\GeneratedHashesAnims.txt");
+            file.Close();
         }
 
         using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt");
 
         var options = new ParallelOptions{MaxDegreeOfParallelism = 8};
+
+        string[] foundHashes = [];
 
         Parallel.ForEach(JUPVMTypes, animType =>
         {
@@ -157,17 +187,23 @@ class CODHashFinder
                         Console.WriteLine(stringedName);
                     }
 
-                    Parallel.ForEach(JUPAnimAssetLog, options, async (hash, ct) =>
+                    Parallel.ForEach(JUPAnimAssetLog, hash =>
                     {
                         if(generatedHash == hash)
                         {
-                            await GeneratedHashesAnims.WriteLineAsync(generatedHash + "," + stringedName);
-                            Console.WriteLine(generatedHash + "," + stringedName);
+                            string fullHash = generatedHash + "," + stringedName;
+                            foundHashes = foundHashes.Append(fullHash).ToArray();
+                            Console.WriteLine(fullHash);
                         }
                     });
                 }
             });
         });
+
+        foreach(string foundHash in foundHashes)
+        {
+            GeneratedHashesAnims.WriteLine(foundHash);
+        }
     }
 
     static void T10Anims()
@@ -180,12 +216,15 @@ class CODHashFinder
 
         if(!File.Exists(@"Files\GeneratedHashesAnims.txt"))
         {
-            File.Create(@"Files\GeneratedHashesAnims.txt");
+            var file = File.Create(@"Files\GeneratedHashesAnims.txt");
+            file.Close();
         }
 
         using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt");
 
         var options = new ParallelOptions{MaxDegreeOfParallelism = 8};
+
+        string[] foundHashes = [];
 
         Parallel.ForEach(T10VMTypes, animType =>
         {
@@ -201,17 +240,23 @@ class CODHashFinder
                         Console.WriteLine(stringedName);
                     }
 
-                    Parallel.ForEach(T10AnimAssetLog, options, async (hash, ct) =>
+                    Parallel.ForEach(T10AnimAssetLog, hash =>
                     {
                         if(generatedHash == hash)
                         {
-                            await GeneratedHashesAnims.WriteLineAsync(generatedHash + "," + stringedName);
-                            Console.WriteLine(generatedHash + "," + stringedName);
+                            string fullHash = generatedHash + "," + stringedName;
+                            foundHashes = foundHashes.Append(fullHash).ToArray();
+                            Console.WriteLine(fullHash);
                         }
                     });
                 }
             });
         });
+
+        foreach(string foundHash in foundHashes)
+        {
+            GeneratedHashesAnims.WriteLine(foundHash);
+        }
     }
 
     static void JUPAnimPackages()
@@ -222,6 +267,158 @@ class CODHashFinder
     static void T10AnimPackages()
     {
         
+    }
+
+    static void AssetLogs()
+    {
+        Console.WriteLine("Generate JUP or T10 Asset Logs?\n\n");
+
+        string? userResponse = Console.ReadLine();
+        string game = "";
+
+        switch(userResponse)
+        {
+            case "t10":
+            case "T10":
+            {
+                game = "T10";
+
+                break;   
+            }
+            case "jup":
+            case "Jup":
+            case "JUP":
+            {
+                game = "JUP";
+
+                break;
+            }
+            default:
+            {
+                return;
+            }
+        }
+
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "AnimAssetLog.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "AnimAssetLogForUnhashing.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "BoneAssetLog.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "BoneAssetLogForUnhashing.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "ImageAssetLog.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "ImageAssetLogForUnhashing.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "MaterialAssetLog.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "MaterialAssetLogForUnhashing.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "ModelAssetLog.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "ModelAssetLogForUnhashing.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "SoundAssetLog.txt",string.Empty);
+        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "SoundAssetLogForUnhashing.txt",string.Empty);
+
+        string[] AssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "AssetLog.txt");
+
+        using StreamWriter AnimAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "AnimAssetLog.txt");
+        using StreamWriter AnimAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "AnimAssetLogForUnhashing.txt");
+
+        using StreamWriter ImageAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "ImageAssetLog.txt");
+        using StreamWriter ImageAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "ImageAssetLogForUnhashing.txt");
+
+        using StreamWriter MaterialAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "MaterialAssetLog.txt");
+        using StreamWriter MaterialAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "MaterialAssetLogForUnhashing.txt");
+
+        using StreamWriter ModelAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "ModelAssetLog.txt");
+        using StreamWriter ModelAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "ModelAssetLogForUnhashing.txt");
+
+        using StreamWriter SoundAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "SoundAssetLog.txt");
+        using StreamWriter SoundAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "SoundAssetLogForUnhashing.txt");
+
+
+        foreach(string hash in AssetLog)
+        {
+            string assetType = hash.Substring(0, hash.IndexOf(','));
+            string result = hash.Substring(hash.IndexOf(',') + 1);
+
+            switch(assetType)
+            {
+                case "Anim":
+                {
+                    if(hash.Contains("xanim_"))
+                    {
+                        //Hashed Anims
+                        result = result.Replace("xanim_","");
+                        AnimAssetLog.WriteLine(result);
+                    }
+                    else
+                    {
+                        //Unhashed Anims
+                        AnimAssetLogForUnhashing.WriteLine(result);
+                    }
+
+                    break;
+                }
+                case "Image":
+                {
+                    if(hash.Contains("ximage_"))
+                    {
+                        //Hashed Images
+                        result = result.Replace("ximage_","");
+                        ImageAssetLog.WriteLine(result);
+                    }
+                    else
+                    {
+                        //Unhashed Images
+                        ImageAssetLogForUnhashing.WriteLine(result);
+                    }
+
+                    break;
+                }
+                case "Material":
+                {
+                    if(hash.Contains("xmaterial_"))
+                    {
+                        //Hashed Materials
+                        result = result.Replace("xmaterial_","");
+                        MaterialAssetLog.WriteLine(result);
+                    }
+                    else
+                    {
+                        //Unhashed Materials
+                        MaterialAssetLogForUnhashing.WriteLine(result);
+                    }
+
+                    break;
+                }
+                case "Model":
+                {
+                    if(hash.Contains("xmodel_"))
+                    {
+                        //Hashed Models
+                        result = result.Replace("xmodel_","");
+                        ModelAssetLog.WriteLine(result);
+                    }
+                    else
+                    {
+                        //Unhashed Models
+                        ModelAssetLogForUnhashing.WriteLine(result);
+                    }
+
+                    break;
+                }
+                case "Sound":
+                {
+                    if(hash.Contains("xsound_"))
+                    {
+                        //Hashed Sounds
+                        result = result.Replace("xsound_","");
+                        SoundAssetLog.WriteLine(result);
+                    }
+                    else
+                    {
+                        //Unhashed Sounds
+                        SoundAssetLogForUnhashing.WriteLine(result);
+                    }
+
+                    break;
+                }
+            }
+        }
     }
 
     static void ToggleDebug()
