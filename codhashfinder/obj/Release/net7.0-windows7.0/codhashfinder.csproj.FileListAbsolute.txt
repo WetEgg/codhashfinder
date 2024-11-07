@@ -1,0 +1,5 @@
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net7.0-windows7.0\codhashfinder.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net7.0-windows7.0\codhashfinder.AssemblyInfoInputs.cache
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net7.0-windows7.0\codhashfinder.AssemblyInfo.cs
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net7.0-windows7.0\codhashfinder.csproj.CoreCompileInputs.cache
+C:\Users\jacke\Documents\GitHub\codhashfinder\codhashfinder\obj\Release\net7.0-windows7.0\codhashfinder.sourcelink.json
