@@ -1,5 +1,6 @@
-﻿using System.Net;
-using System;
+﻿using System;
+using System.IO;
+using System.Net;
 using System.Text;
 using System.Linq;
 using System.IO;
@@ -30,9 +31,7 @@ class CODHashFinder
 
             2 - Anim Packages
 
-                21 - MW2/3 Anim Packages (IW9/JUP)
-
-                22 - BO6 Anim Packages (T10)
+                21 - Anim Packages
             
             3 - Images
 
@@ -45,6 +44,8 @@ class CODHashFinder
             6 - Sounds
 
             7 - Soundbanks
+
+                71 - Unhash Soundbanks
 
             9 - Miscellanious
 
@@ -84,19 +85,19 @@ class CODHashFinder
                         }
                         case "21":
                         {
-                            JUPAnimPackages();
-
-                            break;
-                        }
-                        case "22":
-                        {
-                            T10AnimPackages();
+                            AnimPackages();
 
                             break;
                         }
                         case "31":
                         {
                             MaterialsToImages();
+
+                            break;
+                        }
+                        case "71":
+                        {
+                            Soundbanks();
 
                             break;
                         }
@@ -165,7 +166,7 @@ class CODHashFinder
     {
         for(;;)
         {
-            Console.WriteLine("JUP or T10?\n\n");
+            Console.WriteLine("JUP or T10?\n");
 
             string? userResponse = Console.ReadLine();
 
@@ -288,14 +289,53 @@ class CODHashFinder
         }
     }
 
-    static void JUPAnimPackages()
+    static void AnimPackages()
     {
+        string game = PickGame();
+        game = game.ToLower();
 
-    }
+        string game1 = "bo6";
+        if(game == "JUP")
+        {
+            game1 = "mw6";
+        }
 
-    static void T10AnimPackages()
-    {
-        
+        Console.WriteLine("Unhashing Animpackage Names:\n");
+
+        string[] Weapons = File.ReadAllLines(@"Files\Shared\WeaponNames.txt");
+        string[] AnimPackages = Directory.GetFiles(@"Files\Anim Packages\anim_pkgs_" + game1);
+        string[] AnimPackageVariantNames = File.ReadAllLines(@"Files\Anim Packages\AnimPackageVariantNames.txt");
+
+        Parallel.ForEach(AnimPackages, animpackage =>
+        {
+            if(animpackage.Contains(game1 + "\\soundbank_"))
+            {
+                foreach(string weapon in Weapons)
+                {
+                    Parallel.ForEach(AnimPackageVariantNames, animpackageSuffix =>
+                    {
+                        string animpackageHashed =  animpackage.Substring(animpackage.LastIndexOf('\\') + 1);
+                        animpackageHashed = animpackageHashed.Replace("soundbank_","");
+                        animpackageHashed = animpackageHashed.Replace(".csv","");
+                        string stringedName = "weapon_" + game + "_" + weapon + animpackageSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + animpackageHashed);
+                        }
+
+                        if(CalcHash(stringedName) == animpackageHashed)
+                        {
+                            if(File.Exists(@"Files\Anim Packages\anim_pkgs_" + game1 + "\\animpkg_" + animpackageHashed + ".csv"))
+                            {
+                                Console.WriteLine(animpackageHashed + " | " + stringedName);
+                                File.Move(@"Files\Anim Packages\anim_pkgs_" + game1 + "\\animpkg_" + animpackageHashed + ".csv", @"Files\Anim Packages\anim_pkgs_" + game1 + "\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            }
+        });
     }
 
     static void MaterialsToImages()
@@ -332,6 +372,87 @@ class CODHashFinder
                     }
                 });
             });
+        });
+    }
+
+    static void Soundbanks()
+    {
+        string game = PickGame();
+        game = game.ToLower();
+
+        string game1 = "bo6";
+        if(game == "JUP")
+        {
+            game1 = "mw6";
+        }
+
+        Console.WriteLine("Unhashing Soundbank Names:\n");
+
+        string[] NoPlatformWeapons = File.ReadAllLines(@"Files\Shared\NoPlatformWeaponNames.txt");
+        string[] Soundbanks = Directory.GetFiles(@"Files\Sound Banks\soundbank_" + game1);
+        string[] SoundbanksTR = Directory.GetFiles(@"Files\Sound Banks\soundbanktr_" + game1);
+        string[] SoundbankSuffixes = File.ReadAllLines(@"Files\Sound Banks\SoundbankSuffixes.txt");
+
+        Parallel.ForEach(Soundbanks, soundbank =>
+        {
+            if(soundbank.Contains(game1 + "\\soundbank_"))
+            {
+                foreach(string weapon in NoPlatformWeapons)
+                {
+                    Parallel.ForEach(SoundbankSuffixes, soundBankSuffix =>
+                    {
+                        string soundbankHashed =  soundbank.Substring(soundbank.LastIndexOf('\\') + 1);
+                        soundbankHashed = soundbankHashed.Replace("soundbank_","");
+                        soundbankHashed = soundbankHashed.Replace(".csv","");
+                        string stringedName = "weapon_" + game + "_" + weapon + soundBankSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + soundbankHashed);
+                        }
+
+                        if(CalcHash(stringedName) == soundbankHashed)
+                        {
+                            if(File.Exists(@"Files\Sound Banks\soundbank_" + game1 + "\\soundbank_" + soundbankHashed + ".csv"))
+                            {
+                                Console.WriteLine(soundbankHashed + " | " + stringedName);
+                                File.Move(@"Files\Sound Banks\soundbank_" + game1 + "\\soundbank_" + soundbankHashed + ".csv", @"Files\Sound Banks\soundbank_" + game1 + "\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            }
+        });
+
+        Parallel.ForEach(SoundbanksTR, soundbankTR =>
+        {
+            if(soundbankTR.Contains(game1 + "\\soundbanktr_"))
+            {
+                foreach(string weapon in NoPlatformWeapons)
+                {
+                    Parallel.ForEach(SoundbankSuffixes, soundBankSuffix =>
+                    {
+                        string soundbankTRHashed =  soundbankTR.Substring(soundbankTR.LastIndexOf('\\') + 1);
+                        soundbankTRHashed = soundbankTRHashed.Replace("soundbanktr_","");
+                        soundbankTRHashed = soundbankTRHashed.Replace(".csv","");
+                        string stringedName = "weapon_" + game + "_" + weapon + soundBankSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + soundbankTRHashed);
+                        }
+
+                        if(CalcHash(stringedName) == soundbankTRHashed)
+                        {
+                            if(File.Exists(@"Files\Sound Banks\soundbanktr_" + game1 + "\\soundbanktr_" + soundbankTRHashed + ".csv"))
+                            {
+                                Console.WriteLine(soundbankTRHashed + " | " + stringedName);
+                                File.Move(@"Files\Sound Banks\soundbanktr_" + game1 + "\\soundbanktr_" + soundbankTRHashed + ".csv", @"Files\Sound Banks\soundbanktr_" + game1 + "\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            }
         });
     }
 
