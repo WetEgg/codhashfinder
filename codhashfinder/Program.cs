@@ -69,6 +69,8 @@ class CODHashFinder
 
                 85 - Old Sounds
 
+                86 - Old Soundbanks
+
             9 - Miscellanious
 
                 91 - Asset Logs
@@ -182,6 +184,12 @@ class CODHashFinder
                         case "85":
                         {
                             OldSounds();
+
+                            break;
+                        }
+                        case "86":
+                        {
+                            OldSoundbanks();
 
                             break;
                         }
@@ -941,6 +949,133 @@ class CODHashFinder
     static void OldSounds()
     {
 
+    }
+
+    static void OldSoundbanks()
+    {
+        Console.WriteLine("Unhashing old Soundbank Names:\n");
+        
+        string[] JUPSoundbanks = Directory.GetFiles(@"Files\Sound Banks\soundbank_mw6");
+        string[] JUPSoundbanksTR = Directory.GetFiles(@"Files\Sound Banks\soundbanktr_mw6");
+        string[] T10Soundbanks = Directory.GetFiles(@"Files\Sound Banks\soundbank_bo6");
+        string[] T10SoundbanksTR = Directory.GetFiles(@"Files\Sound Banks\soundbanktr_bo6");
+        string[] OldSoundbankNames = File.ReadAllLines(@"Files\Old Hashes\OldSoundbankNames.txt");
+        string[] SoundbankSuffixes = File.ReadAllLines(@"Files\Sound Banks\SoundbankSuffixes.txt");
+
+        Parallel.ForEach(OldSoundbankNames, oldSoundbank =>
+        {
+            Parallel.ForEach(JUPSoundbanks, soundbank =>
+            {
+                if(soundbank.Contains("mw6\\soundbank_"))
+                {
+                    Parallel.ForEach(SoundbankSuffixes, soundBankSuffix =>
+                    {
+                        string soundbankHashed =  soundbank.Substring(soundbank.LastIndexOf('\\') + 1);
+                        soundbankHashed = soundbankHashed.Replace("soundbank_","");
+                        soundbankHashed = soundbankHashed.Replace(".csv","");
+                        string stringedName = oldSoundbank + soundBankSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + soundbankHashed);
+                        }
+
+                        if(CalcHash(stringedName) == soundbankHashed)
+                        {
+                            if(File.Exists(@"Files\Sound Banks\soundbank_mw6\\soundbank_" + soundbankHashed + ".csv"))
+                            {
+                                Console.WriteLine(soundbankHashed + " | " + stringedName);
+                                File.Move(@"Files\Sound Banks\soundbank_mw6\\soundbank_" + soundbankHashed + ".csv", @"Files\Sound Banks\soundbank_mw6\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            });
+
+            Parallel.ForEach(JUPSoundbanksTR, soundbankTR =>
+            {
+                if(soundbankTR.Contains("mw6\\soundbanktr_"))
+                {
+                    Parallel.ForEach(SoundbankSuffixes, soundBankSuffix =>
+                    {
+                        string soundbankTRHashed =  soundbankTR.Substring(soundbankTR.LastIndexOf('\\') + 1);
+                        soundbankTRHashed = soundbankTRHashed.Replace("soundbanktr_","");
+                        soundbankTRHashed = soundbankTRHashed.Replace(".csv","");
+                        string stringedName = oldSoundbank + soundBankSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + soundbankTRHashed);
+                        }
+
+                        if(CalcHash(stringedName) == soundbankTRHashed)
+                        {
+                            if(File.Exists(@"Files\Sound Banks\soundbanktr_mw6\\soundbanktr_" + soundbankTRHashed + ".csv"))
+                            {
+                                Console.WriteLine(soundbankTRHashed + " | " + stringedName);
+                                File.Move(@"Files\Sound Banks\soundbanktr_mw6\\soundbanktr_" + soundbankTRHashed + ".csv", @"Files\Sound Banks\soundbanktr_mw6\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            });
+
+            Parallel.ForEach(T10Soundbanks, soundbank =>
+            {
+                if(soundbank.Contains("bo6\\soundbank_"))
+                {
+                    Parallel.ForEach(SoundbankSuffixes, soundBankSuffix =>
+                    {
+                        string soundbankHashed =  soundbank.Substring(soundbank.LastIndexOf('\\') + 1);
+                        soundbankHashed = soundbankHashed.Replace("soundbank_","");
+                        soundbankHashed = soundbankHashed.Replace(".csv","");
+                        string stringedName = oldSoundbank + soundBankSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + soundbankHashed);
+                        }
+
+                        if(CalcHash(stringedName) == soundbankHashed)
+                        {
+                            if(File.Exists(@"Files\Sound Banks\soundbank_bo6\\soundbank_" + soundbankHashed + ".csv"))
+                            {
+                                Console.WriteLine(soundbankHashed + " | " + stringedName);
+                                File.Move(@"Files\Sound Banks\soundbank_bo6\\soundbank_" + soundbankHashed + ".csv", @"Files\Sound Banks\soundbank_bo6\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            });
+
+            Parallel.ForEach(T10SoundbanksTR, soundbankTR =>
+            {
+                if(soundbankTR.Contains("bo6\\soundbanktr_"))
+                {
+                    Parallel.ForEach(SoundbankSuffixes, soundBankSuffix =>
+                    {
+                        string soundbankTRHashed =  soundbankTR.Substring(soundbankTR.LastIndexOf('\\') + 1);
+                        soundbankTRHashed = soundbankTRHashed.Replace("soundbanktr_","");
+                        soundbankTRHashed = soundbankTRHashed.Replace(".csv","");
+                        string stringedName = oldSoundbank + soundBankSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + soundbankTRHashed);
+                        }
+
+                        if(CalcHash(stringedName) == soundbankTRHashed)
+                        {
+                            if(File.Exists(@"Files\Sound Banks\soundbanktr_bo6\\soundbanktr_" + soundbankTRHashed + ".csv"))
+                            {
+                                Console.WriteLine(soundbankTRHashed + " | " + stringedName);
+                                File.Move(@"Files\Sound Banks\soundbanktr_bo6\\soundbanktr_" + soundbankTRHashed + ".csv", @"Files\Sound Banks\soundbanktr_bo6\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            });
+        });
     }
 
     static void AssetLogs()
