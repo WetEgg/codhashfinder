@@ -55,6 +55,8 @@ class CODHashFinder
 
                 71 - Unhash Soundbanks
 
+                72 - Soundbank Name Guesser
+
             8 - Old Hashes
 
                 81 - Old Animations
@@ -144,6 +146,12 @@ class CODHashFinder
                         case "71":
                         {
                             Soundbanks();
+
+                            break;
+                        }
+                        case "72":
+                        {
+                            SoundbankGuesser();
 
                             break;
                         }
@@ -714,6 +722,90 @@ class CODHashFinder
             }
         });
     }
+
+    static void SoundbankGuesser()
+    {
+        string game = PickGame();
+        game = game.ToLower();
+
+        string game1 = "bo6";
+        if(game == "JUP")
+        {
+            game1 = "mw6";
+        }
+
+        for(;;)
+        {
+            Console.WriteLine("Enter name to guess, type 'Quit' to exit:\n");
+            string? userResponse = Console.ReadLine();
+
+            if(userResponse == "quit" || userResponse == "Quit")
+            {
+                break;
+            }
+
+            string[] Soundbanks = Directory.GetFiles(@"Files\Sound Banks\soundbank_" + game1);
+            string[] SoundbanksTR = Directory.GetFiles(@"Files\Sound Banks\soundbanktr_" + game1);
+            string[] SoundbankSuffixes = File.ReadAllLines(@"Files\Sound Banks\SoundbankSuffixes.txt");
+
+            Parallel.ForEach(Soundbanks, soundbank =>
+            {
+                if(soundbank.Contains(game1 + "\\soundbank_"))
+                {
+                    Parallel.ForEach(SoundbankSuffixes, soundBankSuffix =>
+                    {
+                        string soundbankHashed =  soundbank.Substring(soundbank.LastIndexOf('\\') + 1);
+                        soundbankHashed = soundbankHashed.Replace("soundbank_","");
+                        soundbankHashed = soundbankHashed.Replace(".csv","");
+                        string stringedName = userResponse + soundBankSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + soundbankHashed);
+                        }
+
+                        if(CalcHash(stringedName) == soundbankHashed)
+                        {
+                            if(File.Exists(@"Files\Sound Banks\soundbank_" + game1 + "\\soundbank_" + soundbankHashed + ".csv"))
+                            {
+                                Console.WriteLine(soundbankHashed + " | " + stringedName);
+                                File.Move(@"Files\Sound Banks\soundbank_" + game1 + "\\soundbank_" + soundbankHashed + ".csv", @"Files\Sound Banks\soundbank_" + game1 + "\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            });
+
+            Parallel.ForEach(SoundbanksTR, soundbankTR =>
+            {
+                if(soundbankTR.Contains(game1 + "\\soundbanktr_"))
+                {
+                    Parallel.ForEach(SoundbankSuffixes, soundBankSuffix =>
+                    {
+                        string soundbankTRHashed =  soundbankTR.Substring(soundbankTR.LastIndexOf('\\') + 1);
+                        soundbankTRHashed = soundbankTRHashed.Replace("soundbanktr_","");
+                        soundbankTRHashed = soundbankTRHashed.Replace(".csv","");
+                        string stringedName = userResponse + soundBankSuffix;
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + soundbankTRHashed);
+                        }
+
+                        if(CalcHash(stringedName) == soundbankTRHashed)
+                        {
+                            if(File.Exists(@"Files\Sound Banks\soundbanktr_" + game1 + "\\soundbanktr_" + soundbankTRHashed + ".csv"))
+                            {
+                                Console.WriteLine(soundbankTRHashed + " | " + stringedName);
+                                File.Move(@"Files\Sound Banks\soundbanktr_" + game1 + "\\soundbanktr_" + soundbankTRHashed + ".csv", @"Files\Sound Banks\soundbanktr_" + game1 + "\\" + stringedName + ".csv");
+                            }
+                        }
+                    });
+                }
+            });
+        }
+    }
+
 
     static void OldAnims()
     {
