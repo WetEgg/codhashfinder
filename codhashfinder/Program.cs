@@ -51,6 +51,10 @@ class CODHashFinder
 
             6 - Sounds
 
+                61 - Unhash Sounds
+
+                62 - Sound Guesser
+
             7 - Soundbanks
 
                 71 - Unhash Soundbanks
@@ -143,6 +147,18 @@ class CODHashFinder
                         {
                             T10BPMaterials();
                             
+                            break;
+                        }
+                        case "61":
+                        {
+                            SoundUnhashing();
+
+                            break;
+                        }
+                        case "62":
+                        {
+                            SoundGuesser();
+
                             break;
                         }
                         case "71":
@@ -293,13 +309,13 @@ class CODHashFinder
         string[] JUPAnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPAnimAssetLog.txt");
         string[] SharedWeaponNamesAnims = File.ReadAllLines(@"Files\Shared\WeaponNamesAnims.txt");
 
-        if(!File.Exists(@"Files\GeneratedHashesAnims.txt"))
+        if(File.Exists(@"Files\GeneratedHashesAnims.txt") != true)
         {
             var file = File.Create(@"Files\GeneratedHashesAnims.txt");
             file.Close();
         }
 
-        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt");
+        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt", true);
 
         string[] foundHashes = [];
 
@@ -344,13 +360,13 @@ class CODHashFinder
         string[] T10AnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10AnimAssetLog.txt");
         string[] SharedWeaponNamesAnims = File.ReadAllLines(@"Files\Shared\WeaponNamesAnims.txt");
 
-        if(!File.Exists(@"Files\GeneratedHashesAnims.txt"))
+        if(File.Exists(@"Files\GeneratedHashesAnims.txt") != true)
         {
             var file = File.Create(@"Files\GeneratedHashesAnims.txt");
             file.Close();
         }
 
-        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt");
+        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt", true);
 
         string[] foundHashes = [];
 
@@ -446,7 +462,7 @@ class CODHashFinder
         string[] MaterialNames = File.ReadAllLines(@"Files\Images\MaterialNames.txt");
         string[] TextureTypes = File.ReadAllLines(@"Files\Images\TextureNames.txt");
 
-        using StreamWriter GeneratedHashesImages = new StreamWriter(@"Files\GeneratedHashesImages.txt");
+        using StreamWriter GeneratedHashesImages = new StreamWriter(@"Files\GeneratedHashesImages.txt", true);
 
         string[] foundHashes = [];
 
@@ -489,7 +505,7 @@ class CODHashFinder
         string[] JUPNumbers = File.ReadAllLines(@"Files\Materials\JUPNumbers.txt");
         string[] JUPWeaponNames = File.ReadAllLines(@"Files\Shared\JupWeaponNames.txt");
 
-        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt");
+        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
         string[] foundHashes = [];
 
@@ -534,7 +550,7 @@ class CODHashFinder
         string[] MaterialKeywords = File.ReadAllLines(@"Files\Materials\Keywords.txt");
         string[] T10WeaponNames = File.ReadAllLines(@"Files\Shared\T10WeaponNames.txt");
 
-        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt");
+        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
         string[] foundHashes = [];
 
@@ -575,7 +591,7 @@ class CODHashFinder
         string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
         string[] T10ModelNames = File.ReadAllLines(@"Files\Materials\T10WeaponModelNames.txt");
 
-        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt");
+        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
         string[] foundHashes = [];
 
@@ -616,7 +632,7 @@ class CODHashFinder
         string[] T10BPNames = File.ReadAllLines(@"Files\Materials\T10BlueprintNames.txt");
         string[] MaterialNames = File.ReadAllLines(@"Files\Images\MaterialNames.txt");
 
-        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt");
+        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
         string[] foundHashes = [];
 
@@ -647,6 +663,59 @@ class CODHashFinder
         foreach(string foundHash in foundHashes)
         {
             GeneratedHashesMaterials.WriteLine(foundHash);
+        }
+    }
+
+    static void SoundUnhashing()
+    {
+    }
+
+    static void SoundGuesser()
+    {
+        string game = PickGame();
+
+        Console.WriteLine("Enter a sound path up to the suffix to guess a sound name, type 'Quit' to exit:\n");
+
+        if(File.Exists(@"Files\GeneratedHashesSounds.txt") != true)
+        {
+            var file = File.Create(@"Files\GeneratedHashesSounds.txt");
+            file.Close();
+        }
+
+        for(;;)
+        {
+            string[] SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "SoundAssetLog.txt");
+            string[] SoundSuffixes = File.ReadAllLines(@"Files\Sounds\SoundSuffixes.txt");
+
+            string? userResponse = Console.ReadLine();
+
+            using StreamWriter GeneratedHashesSounds = new StreamWriter(@"Files\GeneratedHashesSounds.txt", true);
+
+            if(userResponse != null && userResponse.ToLower() == "quit")
+            {
+                break;
+            }
+            else if(userResponse != null)
+            {
+                Parallel.ForEach(SoundSuffixes, suffix =>
+                {
+                    string stringedName = userResponse + suffix;
+                    string generatedHash = CalcHash(stringedName);
+
+                    Parallel.ForEach(SoundAssetLog, hashedSound =>
+                    {
+                        if(hashedSound == generatedHash)
+                        {
+                            string swappedSybmols = userResponse.Replace('.','\\');
+                            string fullHash = generatedHash + "," + swappedSybmols + suffix;
+                            GeneratedHashesSounds.WriteLine(fullHash);
+                            Console.WriteLine(fullHash);
+                        }
+                    });
+                });
+            }
+
+            GeneratedHashesSounds.Close();
         }
     }
 
@@ -742,12 +811,14 @@ class CODHashFinder
             game1 = "mw6";
         }
 
+        Console.WriteLine("Enter name to guess, type 'Quit' to exit:\n");
+
         for(;;)
         {
-            Console.WriteLine("Enter name to guess, type 'Quit' to exit:\n");
+            
             string? userResponse = Console.ReadLine();
 
-            if(userResponse == "quit" || userResponse == "Quit")
+            if(userResponse != null && userResponse.ToLower() == "quit")
             {
                 break;
             }
@@ -819,13 +890,13 @@ class CODHashFinder
     {
         Console.WriteLine("Generating Anim names from Materials:\n");
 
-        if(!File.Exists(@"Files\GeneratedHashesAnims.txt"))
+        if(File.Exists(@"Files\GeneratedHashesAnims.txt") != true)
         {
             var file = File.Create(@"Files\GeneratedHashesAnims.txt");
             file.Close();
         }
 
-        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt");
+        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt", true);
 
         string[] JupAnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPAnimAssetLog.txt");
         string[] T10AnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10AnimAssetLog.txt");
@@ -861,13 +932,13 @@ class CODHashFinder
     {
         Console.WriteLine("Generating Image names from Materials:\n");
 
-        if(!File.Exists(@"Files\GeneratedHashesImages.txt"))
+        if(File.Exists(@"Files\GeneratedHashesImages.txt") != true)
         {
             var file = File.Create(@"Files\GeneratedHashesImages.txt");
             file.Close();
         }
 
-        using StreamWriter GeneratedHashesImages = new StreamWriter(@"Files\GeneratedHashesImages.txt");
+        using StreamWriter GeneratedHashesImages = new StreamWriter(@"Files\GeneratedHashesImages.txt", true);
 
         string[] JupImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPImageAssetLog.txt");
         string[] T10ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10ImageAssetLog.txt");
@@ -903,13 +974,13 @@ class CODHashFinder
     {
         Console.WriteLine("Generating material names from Materials:\n");
 
-        if(!File.Exists(@"Files\GeneratedHashesMaterials.txt"))
+        if(File.Exists(@"Files\GeneratedHashesMaterials.txt") != true)
         {
             var file = File.Create(@"Files\GeneratedHashesMaterials.txt");
             file.Close();
         }
 
-        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt");
+        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
         string[] JupMaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPMaterialAssetLog.txt");
         string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
@@ -1082,19 +1153,6 @@ class CODHashFinder
     {
         string game = PickGame();
 
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "AnimAssetLog.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "AnimAssetLogForUnhashing.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "BoneAssetLog.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "BoneAssetLogForUnhashing.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "ImageAssetLog.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "ImageAssetLogForUnhashing.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "MaterialAssetLog.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "MaterialAssetLogForUnhashing.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "ModelAssetLog.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "ModelAssetLogForUnhashing.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "SoundAssetLog.txt",string.Empty);
-        System.IO.File.WriteAllText(@"Files\Asset Logs\" + game + "SoundAssetLogForUnhashing.txt",string.Empty);
-
         string[] AssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "AssetLog.txt");
 
         using StreamWriter AnimAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "AnimAssetLog.txt");
@@ -1211,7 +1269,7 @@ class CODHashFinder
 
             string? userResponse = Console.ReadLine();
 
-            if(userResponse == "Quit" || userResponse == "quit")
+            if(userResponse != null && userResponse.ToLower() == "quit")
             {
                 break;
             }
