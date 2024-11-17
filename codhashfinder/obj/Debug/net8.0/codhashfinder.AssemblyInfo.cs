@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("codhashfinder")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+18bf3bb8d8905f83ee5e37d28ec250b271886d72")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6a37ddcc9b83afbb12498f09fa07ded0b41c4ea2")]
 [assembly: System.Reflection.AssemblyProductAttribute("codhashfinder")]
 [assembly: System.Reflection.AssemblyTitleAttribute("codhashfinder")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

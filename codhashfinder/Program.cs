@@ -888,7 +888,7 @@ class CODHashFinder
 
     static void OldAnims()
     {
-        Console.WriteLine("Generating Anim names from Materials:\n");
+        Console.WriteLine("Checking old Anim Names:\n");
 
         if(File.Exists(@"Files\GeneratedHashesAnims.txt") != true)
         {
@@ -900,37 +900,44 @@ class CODHashFinder
 
         string[] JupAnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPAnimAssetLog.txt");
         string[] T10AnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10AnimAssetLog.txt");
-
         string[] OldAnims = File.ReadAllLines(@"Files\Old Hashes\OldAnims.txt");
 
-        foreach(string hashedAnim in JupAnimAssetLog)
+        string[] foundHashes = [];
+
+        foreach(string animName in OldAnims)
         {
-            foreach(string animName in OldAnims)
+            string generatedHash = CalcHash(animName);
+
+            Parallel.ForEach(JupAnimAssetLog, hashedAnim =>
             {
-                if(CalcHash(animName) == hashedAnim)
+                if(generatedHash == hashedAnim)
                 {
-                    Console.WriteLine(animName + " | " + hashedAnim);
-                    GeneratedHashesAnims.WriteLine(hashedAnim + "," + animName);
+                    string fullHash = hashedAnim + "," + animName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
                 }
-            }
+            });
+
+            Parallel.ForEach(T10AnimAssetLog, hashedAnim =>
+            {
+                if(generatedHash == hashedAnim)
+                {
+                    string fullHash = hashedAnim + "," + animName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                }
+            });
         }
 
-        foreach(string hashedAnim in T10AnimAssetLog)
+        foreach(string foundHash in foundHashes)
         {
-            foreach(string animName in OldAnims)
-            {
-                if(CalcHash(animName) == hashedAnim)
-                {
-                    Console.WriteLine(animName + " | " + hashedAnim);
-                    GeneratedHashesAnims.WriteLine(hashedAnim + "," + animName);
-                }
-            }
+            GeneratedHashesAnims.WriteLine(foundHash);
         }
     }
 
     static void OldImages()
     {
-        Console.WriteLine("Generating Image names from Materials:\n");
+        Console.WriteLine("Checking old Image names:\n");
 
         if(File.Exists(@"Files\GeneratedHashesImages.txt") != true)
         {
@@ -942,37 +949,44 @@ class CODHashFinder
 
         string[] JupImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPImageAssetLog.txt");
         string[] T10ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10ImageAssetLog.txt");
-
         string[] OldImages = File.ReadAllLines(@"Files\Old Hashes\OldImages.txt");
 
-        foreach(string hashedImage in JupImageAssetLog)
+        string[] foundHashes = [];
+
+        foreach(string imageName in OldImages)
         {
-            foreach(string imageName in OldImages)
+            string generatedHash = CalcHash(imageName);
+
+            Parallel.ForEach(JupImageAssetLog, hashedImage =>
             {
-                if(CalcHash(imageName) == hashedImage)
+                if(generatedHash == hashedImage)
                 {
-                    Console.WriteLine(imageName + " | " + hashedImage);
-                    GeneratedHashesImages.WriteLine(hashedImage + "," + imageName);
+                    string fullHash = hashedImage + "," + imageName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
                 }
-            }
+            });
+
+            Parallel.ForEach(T10ImageAssetLog, hashedImage =>
+            {
+                if(generatedHash == hashedImage)
+                {
+                    string fullHash = hashedImage + "," + imageName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                }
+            });
         }
 
-        foreach(string hashedImage in T10ImageAssetLog)
+        foreach(string foundHash in foundHashes)
         {
-            foreach(string imageName in OldImages)
-            {
-                if(CalcHash(imageName) == hashedImage)
-                {
-                    Console.WriteLine(imageName + " | " + hashedImage);
-                    GeneratedHashesImages.WriteLine(hashedImage + "," + imageName);
-                }
-            }
+            GeneratedHashesImages.WriteLine(foundHash);
         }
     }
 
     static void OldMaterials()
     {
-        Console.WriteLine("Generating material names from Materials:\n");
+        Console.WriteLine("Checking old Material names:\n");
 
         if(File.Exists(@"Files\GeneratedHashesMaterials.txt") != true)
         {
@@ -984,37 +998,88 @@ class CODHashFinder
 
         string[] JupMaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPMaterialAssetLog.txt");
         string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
+        string[] OldMaterials = File.ReadAllLines(@"Files\Old Hashes\OldMaterials.txt");
 
-        string[] OldMaterials = File.ReadAllLines(@"Files\Old Hashes\Oldmaterials.txt");
+        string[] foundHashes = [];
 
-        foreach(string hashedMaterial in JupMaterialAssetLog)
+        foreach(string materialName in OldMaterials)
         {
-            foreach(string materialName in OldMaterials)
+            string generatedHash = CalcHash(materialName);
+
+            Parallel.ForEach(JupMaterialAssetLog, hashedMaterial =>
             {
-                if(CalcHash(materialName) == hashedMaterial)
+                if(generatedHash == hashedMaterial)
                 {
-                    Console.WriteLine(materialName + " | " + hashedMaterial);
-                    GeneratedHashesMaterials.WriteLine(hashedMaterial + "," + materialName);
+                    string fullHash = hashedMaterial + "," + materialName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
                 }
-            }
+            });
+
+            Parallel.ForEach(T10MaterialAssetLog, hashedMaterial =>
+            {
+                if(generatedHash == hashedMaterial)
+                {
+                    string fullHash = hashedMaterial + "," + materialName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                }
+            });
         }
 
-        foreach(string hashedMaterial in T10MaterialAssetLog)
+        foreach(string foundHash in foundHashes)
         {
-            foreach(string materialName in OldMaterials)
-            {
-                if(CalcHash(materialName) == hashedMaterial)
-                {
-                    Console.WriteLine(materialName + " | " + hashedMaterial);
-                    GeneratedHashesMaterials.WriteLine(hashedMaterial + "," + materialName);
-                }
-            }
+            GeneratedHashesMaterials.WriteLine(foundHash);
         }
     }
 
     static void OldModels()
     {
+        Console.WriteLine("Checking old Model names:\n");
 
+        if(File.Exists(@"Files\GeneratedHashesModels.txt") != true)
+        {
+            var file = File.Create(@"Files\GeneratedHashesModels.txt");
+            file.Close();
+        }
+
+        using StreamWriter GeneratedHashesModels = new StreamWriter(@"Files\GeneratedHashesModel.txt", true);
+
+        string[] JupModelAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPModelAssetLog.txt");
+        string[] T10ModelAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10ModelAssetLog.txt");
+        string[] OldModels = File.ReadAllLines(@"Files\Old Hashes\OldModels.txt");
+
+        string[] foundHashes = [];
+
+        foreach(string modelName in OldModels)
+        {
+            string generatedHash = CalcHash(modelName);
+
+            Parallel.ForEach(JupModelAssetLog, hashedModel =>
+            {
+                if(generatedHash == hashedModel)
+                {
+                    string fullHash = hashedModel + "," + modelName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                }
+            });
+
+            Parallel.ForEach(T10ModelAssetLog, hashedModel =>
+            {
+                if(generatedHash == hashedModel)
+                {
+                    string fullHash = hashedModel + "," + modelName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                }
+            });
+        }
+
+        foreach(string foundHash in foundHashes)
+        {
+            GeneratedHashesModels.WriteLine(foundHash);
+        }
     }
 
     static void OldSounds()
