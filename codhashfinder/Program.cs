@@ -397,6 +397,33 @@ class CODHashFinder
             });
         });
 
+        Parallel.ForEach(T10VMTypes, animType =>
+        {
+            Parallel.ForEach(SharedWeaponNamesAnims, weaponName =>
+            {
+                if(weaponName != "")
+                {
+                    string stringedName = "t10_vm_" + weaponName + "_" + animType;
+                    string generatedHash = CalcHash(stringedName);
+
+                    if(Globals.DebugToggle)
+                    {
+                        Console.WriteLine(stringedName);
+                    }
+
+                    Parallel.ForEach(T10AnimAssetLog, hash =>
+                    {
+                        if(generatedHash == hash)
+                        {
+                            string fullHash = generatedHash + "," + stringedName;
+                            foundHashes = foundHashes.Append(fullHash).ToArray();
+                            Console.WriteLine(fullHash);
+                        }
+                    });
+                }
+            });
+        });
+
         foreach(string foundHash in foundHashes)
         {
             GeneratedHashesAnims.WriteLine(foundHash);
@@ -558,7 +585,7 @@ class CODHashFinder
         {
             Parallel.ForEach(T10WeaponNames, T10WeaponName =>
             {
-                string stringedName = "m/mtl_t10_" + T10WeaponName + "_" + Keyword;
+                string stringedName = "m/mtl_wpn_t10_" + T10WeaponName + "_" + Keyword;
                 string generatedHash = CalcHash(stringedName);
 
                 if(Globals.DebugToggle)
@@ -630,32 +657,40 @@ class CODHashFinder
 
         string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
         string[] T10BPNames = File.ReadAllLines(@"Files\Materials\T10BlueprintNames.txt");
-        string[] MaterialNames = File.ReadAllLines(@"Files\Images\MaterialNames.txt");
+        string[] T10WeaponNames = File.ReadAllLines(@"Files\Shared\T10WeaponNames.txt");
+        string[] MaterialKeywords = File.ReadAllLines(@"Files\Materials\Keywords.txt");
+        string[] mtlTypes = {"","_att","_wpn"};
 
         using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
         string[] foundHashes = [];
 
-        Parallel.ForEach(MaterialNames, MaterialName =>
+        Parallel.ForEach(MaterialKeywords, Keyword =>
         {
             Parallel.ForEach(T10BPNames, BPName =>
             {
-                string stringedName = "m/" + MaterialName + BPName;
-                string generatedHash = CalcHash(stringedName);
-
-                if(Globals.DebugToggle)
+                Parallel.ForEach(T10WeaponNames, T10WeaponName =>
                 {
-                    Console.WriteLine(stringedName);
-                }
-
-                Parallel.ForEach(T10MaterialAssetLog, hashedAsset => 
-                {
-                    if(generatedHash == hashedAsset)
+                    Parallel.ForEach(mtlTypes, type =>
                     {
-                        string fullHash = generatedHash + "," + stringedName;
-                        foundHashes = foundHashes.Append(fullHash).ToArray();
-                        Console.WriteLine(fullHash);
-                    }
+                        string stringedName = "m/mtl" + type + "_t10_" + T10WeaponName + "_" + Keyword + BPName;
+                        string generatedHash = CalcHash(stringedName);
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName);
+                        }
+
+                        Parallel.ForEach(T10MaterialAssetLog, hashedAsset => 
+                        {
+                            if(generatedHash == hashedAsset)
+                            {
+                                string fullHash = generatedHash + "," + stringedName;
+                                foundHashes = foundHashes.Append(fullHash).ToArray();
+                                Console.WriteLine(fullHash);
+                            }
+                        });
+                    });
                 });
             });
         });
