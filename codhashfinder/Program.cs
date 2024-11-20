@@ -75,6 +75,8 @@ class CODHashFinder
 
                 86 - Old Soundbanks
 
+                87 - Old Animpackages
+
             9 - Miscellanious
 
                 91 - Asset Logs
@@ -206,6 +208,12 @@ class CODHashFinder
                         case "86":
                         {
                             OldSoundbanks();
+
+                            break;
+                        }
+                        case "87":
+                        {
+                            OldAnimpackages();
 
                             break;
                         }
@@ -436,7 +444,7 @@ class CODHashFinder
         game = game.ToLower();
 
         string game1 = "bo6";
-        if(game == "JUP")
+        if(game == "jup")
         {
             game1 = "mw6";
         }
@@ -449,16 +457,16 @@ class CODHashFinder
 
         Parallel.ForEach(AnimPackages, animpackage =>
         {
-            if(animpackage.Contains(game1 + "\\soundbank_"))
+            if(animpackage.Contains(game1 + "\\animpkg_"))
             {
                 foreach(string weapon in Weapons)
                 {
                     Parallel.ForEach(AnimPackageVariantNames, animpackageSuffix =>
                     {
                         string animpackageHashed =  animpackage.Substring(animpackage.LastIndexOf('\\') + 1);
-                        animpackageHashed = animpackageHashed.Replace("soundbank_","");
+                        animpackageHashed = animpackageHashed.Replace("animpkg_","");
                         animpackageHashed = animpackageHashed.Replace(".csv","");
-                        string stringedName = "weapon_" + game + "_" + weapon + animpackageSuffix;
+                        string stringedName = game + "_" + weapon + animpackageSuffix;
 
                         if(Globals.DebugToggle)
                         {
@@ -760,7 +768,7 @@ class CODHashFinder
         game = game.ToLower();
 
         string game1 = "bo6";
-        if(game == "JUP")
+        if(game == "jup")
         {
             game1 = "mw6";
         }
@@ -1244,6 +1252,42 @@ class CODHashFinder
                             }
                         }
                     });
+                }
+            });
+        });
+    }
+
+    static void OldAnimpackages()
+    {
+        Console.WriteLine("Unhashing old Anim Package Names:\n");
+        
+        string[] JUPAnimPackages = Directory.GetFiles(@"Files\Anim Packages\anim_pkgs_mw6");
+        string[] OldAnimpackageNames = File.ReadAllLines(@"Files\Old Hashes\OldAnimpackageNames.txt");
+
+        Parallel.ForEach(OldAnimpackageNames, oldSoundbank =>
+        {
+            Parallel.ForEach(JUPAnimPackages, animpackage =>
+            {
+                if(animpackage.Contains("mw6\\animpkg_"))
+                {
+                    string animpackageHashed =  animpackage.Substring(animpackage.LastIndexOf('\\') + 1);
+                    animpackageHashed = animpackageHashed.Replace("animpkg_","");
+                    animpackageHashed = animpackageHashed.Replace(".csv","");
+                    string stringedName = oldSoundbank;
+
+                    if(Globals.DebugToggle)
+                    {
+                        Console.WriteLine(stringedName + " | " + animpackageHashed);
+                    }
+
+                    if(CalcHash(stringedName) == animpackageHashed)
+                    {
+                        if(File.Exists(@"Files\Anim Packages\anim_pkgs_mw6\\animpkg_" + animpackageHashed + ".csv"))
+                        {
+                            Console.WriteLine(animpackageHashed + " | " + stringedName);
+                            File.Move(@"Files\Anim Packages\anim_pkgs_mw6\\animpkg_" + animpackageHashed + ".csv", @"Files\Anim Packages\anim_pkgs_mw6\\" + stringedName + ".csv");
+                        }
+                    }
                 }
             });
         });
