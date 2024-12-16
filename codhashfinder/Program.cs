@@ -1,11 +1,5 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Text;
-using System.Linq;
-using System.IO;
-using System.Threading.Tasks;
-using System.Collections;
+﻿using System.Text;
+using System.Globalization;
 
 public static class Globals
 {
@@ -61,6 +55,8 @@ class CODHashFinder
 
                 72 - Soundbank Name Guesser
 
+                73 - Unhash Aliases
+
             8 - Old Hashes
 
                 81 - Old Animations
@@ -80,6 +76,8 @@ class CODHashFinder
             9 - Miscellanious
 
                 91 - Asset Logs
+
+                97 - Word Combiner
 
                 98 - Hasher
 
@@ -175,6 +173,12 @@ class CODHashFinder
 
                             break;
                         }
+                        case "73":
+                        {
+                            AliasHashes();
+
+                            break;
+                        }
                         case "81":
                         {
                             OldAnims();
@@ -217,9 +221,21 @@ class CODHashFinder
 
                             break;
                         }
+                        case "88":
+                        {
+                            OldBones();
+
+                            break;
+                        }
                         case "91":
                         {
                             AssetLogs();
+
+                            break;
+                        }
+                        case "97":
+                        {
+                            WordCombiner();
 
                             break;
                         }
@@ -304,6 +320,45 @@ class CODHashFinder
                 case "JUP":
                 {
                     return "JUP";
+                }
+            }
+        }
+    }
+
+    static string PickAssetType()
+    {
+        for(;;)
+        {
+            string? assetType = Console.ReadLine();
+
+            if(assetType != null)
+            {
+                assetType = assetType.ToLower();
+
+                if(assetType == "anim" || assetType == "image" || assetType == "material" || assetType == "sound")
+                {   
+                    var textinfo = new CultureInfo("en-US", false).TextInfo;
+                    assetType = textinfo.ToTitleCase(assetType);
+
+                    return assetType;
+                }
+            }
+        }
+    }
+
+    static int PickLength()
+    {
+        for(;;)
+        {
+            string? userResponse = Console.ReadLine();
+
+            if(userResponse != null)
+            {
+                int length = Int32.Parse(userResponse);
+
+                if(length > 0)
+                {
+                    return length;
                 }
             }
         }
@@ -539,6 +594,7 @@ class CODHashFinder
         string[] MaterialKeywords = File.ReadAllLines(@"Files\Materials\Keywords.txt");
         string[] JUPNumbers = File.ReadAllLines(@"Files\Materials\JUPNumbers.txt");
         string[] JUPWeaponNames = File.ReadAllLines(@"Files\Shared\JupWeaponNames.txt");
+        string[] MaterialFolders = File.ReadAllLines(@"Files\Materials\MaterialFolderNames.txt");
 
         using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
@@ -550,22 +606,25 @@ class CODHashFinder
             {
                 Parallel.ForEach(JUPWeaponNames, JUPWeaponName =>
                 {
-                    string stringedName = "m/mtl_jup_" + JUPWeaponName + "_" + Keyword + JUPNumber;
-                    string generatedHash = CalcHash(stringedName);
-
-                    if(Globals.DebugToggle)
+                    Parallel.ForEach(MaterialFolders, MaterialFolder =>
                     {
-                        Console.WriteLine(stringedName);
-                    }
+                        string stringedName = MaterialFolder + "mtl_jup_" + JUPWeaponName + "_" + Keyword + JUPNumber;
+                        string generatedHash = CalcHash(stringedName);
 
-                    Parallel.ForEach(JUPMaterialAssetLog, hashedAsset => 
-                    {
-                        if(generatedHash == hashedAsset)
+                        if(Globals.DebugToggle)
                         {
-                            string fullHash = generatedHash + "," + stringedName;
-                            foundHashes = foundHashes.Append(fullHash).ToArray();
-                            Console.WriteLine(fullHash);
+                            Console.WriteLine(stringedName);
                         }
+
+                        Parallel.ForEach(JUPMaterialAssetLog, hashedAsset => 
+                        {
+                            if(generatedHash == hashedAsset)
+                            {
+                                string fullHash = generatedHash + "," + stringedName;
+                                foundHashes = foundHashes.Append(fullHash).ToArray();
+                                Console.WriteLine(fullHash);
+                            }
+                        });
                     });
                 });
             });
@@ -584,6 +643,7 @@ class CODHashFinder
         string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
         string[] MaterialKeywords = File.ReadAllLines(@"Files\Materials\Keywords.txt");
         string[] T10WeaponNames = File.ReadAllLines(@"Files\Shared\T10WeaponNames.txt");
+        string[] MaterialFolders = File.ReadAllLines(@"Files\Materials\MaterialFolderNames.txt");
 
         using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
@@ -593,7 +653,52 @@ class CODHashFinder
         {
             Parallel.ForEach(T10WeaponNames, T10WeaponName =>
             {
-                string stringedName = "m/mtl_wpn_t10_" + T10WeaponName + "_" + Keyword;
+                Parallel.ForEach(MaterialFolders, MaterialFolder =>
+                {
+                    string stringedName = MaterialFolder + "mtl_wpn_t10_" + T10WeaponName + "_" + Keyword;
+                    string generatedHash = CalcHash(stringedName);
+
+                    if(Globals.DebugToggle)
+                    {
+                        Console.WriteLine(stringedName);
+                    }
+
+                    Parallel.ForEach(T10MaterialAssetLog, hashedAsset => 
+                    {
+                        if(generatedHash == hashedAsset)
+                        {
+                            string fullHash = generatedHash + "," + stringedName;
+                            foundHashes = foundHashes.Append(fullHash).ToArray();
+                            Console.WriteLine(fullHash);
+                        }
+                    });
+                });
+            });
+        });
+
+        foreach(string foundHash in foundHashes)
+        {
+            GeneratedHashesMaterials.WriteLine(foundHash);
+        }
+    }
+
+    static void T10ModelMaterials()
+    {
+        Console.WriteLine("Generating T10 Material Names From Models:\n");
+        
+        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
+        string[] T10ModelNames = File.ReadAllLines(@"Files\Materials\T10WeaponModelNames.txt");
+        string[] MaterialFolders = File.ReadAllLines(@"Files\Materials\MaterialFolderNames.txt");
+
+        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
+
+        string[] foundHashes = [];
+
+        Parallel.ForEach(T10ModelNames, T10ModelName =>
+        {
+            Parallel.ForEach(MaterialFolders, MaterialFolder =>
+            {
+                string stringedName = MaterialFolder + "mtl_" + T10ModelName;
                 string generatedHash = CalcHash(stringedName);
 
                 if(Globals.DebugToggle)
@@ -619,44 +724,6 @@ class CODHashFinder
         }
     }
 
-    static void T10ModelMaterials()
-    {
-        Console.WriteLine("Generating T10 Material Names From Models:\n");
-        
-        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
-        string[] T10ModelNames = File.ReadAllLines(@"Files\Materials\T10WeaponModelNames.txt");
-
-        using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
-
-        string[] foundHashes = [];
-
-        Parallel.ForEach(T10ModelNames, T10ModelName =>
-        {
-            string stringedName = "m/mtl_" + T10ModelName;
-            string generatedHash = CalcHash(stringedName);
-
-            if(Globals.DebugToggle)
-            {
-                Console.WriteLine(stringedName);
-            }
-
-            Parallel.ForEach(T10MaterialAssetLog, hashedAsset => 
-            {
-                if(generatedHash == hashedAsset)
-                {
-                    string fullHash = generatedHash + "," + stringedName;
-                    foundHashes = foundHashes.Append(fullHash).ToArray();
-                    Console.WriteLine(fullHash);
-                }
-            });
-        });
-
-        foreach(string foundHash in foundHashes)
-        {
-            GeneratedHashesMaterials.WriteLine(foundHash);
-        }
-    }
-
     static void T10BPMaterials()
     {
         string game = PickGame();
@@ -668,6 +735,7 @@ class CODHashFinder
         string[] T10WeaponNames = File.ReadAllLines(@"Files\Shared\T10WeaponNames.txt");
         string[] MaterialKeywords = File.ReadAllLines(@"Files\Materials\Keywords.txt");
         string[] mtlTypes = {"","_att","_wpn"};
+        string[] MaterialFolders = File.ReadAllLines(@"Files\Materials\MaterialFolderNames.txt");
 
         using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
@@ -681,22 +749,25 @@ class CODHashFinder
                 {
                     Parallel.ForEach(mtlTypes, type =>
                     {
-                        string stringedName = "m/mtl" + type + "_t10_" + T10WeaponName + "_" + Keyword + BPName;
-                        string generatedHash = CalcHash(stringedName);
-
-                        if(Globals.DebugToggle)
+                        Parallel.ForEach(MaterialFolders, MaterialFolder =>
                         {
-                            Console.WriteLine(stringedName);
-                        }
+                            string stringedName = MaterialFolder + "mtl" + type + "_t10_" + T10WeaponName + "_" + Keyword + BPName;
+                            string generatedHash = CalcHash(stringedName);
 
-                        Parallel.ForEach(T10MaterialAssetLog, hashedAsset => 
-                        {
-                            if(generatedHash == hashedAsset)
+                            if(Globals.DebugToggle)
                             {
-                                string fullHash = generatedHash + "," + stringedName;
-                                foundHashes = foundHashes.Append(fullHash).ToArray();
-                                Console.WriteLine(fullHash);
+                                Console.WriteLine(stringedName);
                             }
+
+                            Parallel.ForEach(T10MaterialAssetLog, hashedAsset => 
+                            {
+                                if(generatedHash == hashedAsset)
+                                {
+                                    string fullHash = generatedHash + "," + stringedName;
+                                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                                    Console.WriteLine(fullHash);
+                                }
+                            });
                         });
                     });
                 });
@@ -711,6 +782,58 @@ class CODHashFinder
 
     static void SoundUnhashing()
     {
+        string game = PickGame();
+
+        Console.WriteLine("Unhashing Sounds:\n");
+
+        if(File.Exists(@"Files\GeneratedHashesSounds.txt") != true)
+        {
+            var file = File.Create(@"Files\GeneratedHashesSounds.txt");
+            file.Close();
+        }
+
+        string[] SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "SoundAssetLog.txt");
+        string[] SoundFolderPaths = File.ReadAllLines(@"Files\Sounds\SoundFolderPaths.txt");
+        string[] SoundNames = File.ReadAllLines(@"Files\Sounds\SoundNames.txt");
+        string[] WeaponNumberSuffixes = File.ReadAllLines(@"Files\Sounds\WeaponNumberSuffixes.txt");
+
+        using StreamWriter GeneratedHashesSounds = new StreamWriter(@"Files\GeneratedHashesSounds.txt", true);
+
+        foreach(string soundFolder in SoundFolderPaths)
+        {
+            Console.WriteLine("Current Folder: " + soundFolder);
+
+            Parallel.ForEach(SoundNames, soundName =>
+            {
+                Parallel.ForEach(WeaponNumberSuffixes, weaponNumber =>
+                {
+                    string stringedName = soundFolder + soundName;
+                    stringedName = stringedName.Replace("VARIANTNUMBER", weaponNumber);
+                    string stringedSuffixName = stringedName;
+                    string generatedHash = CalcHash(stringedSuffixName);
+
+                    if(Globals.DebugToggle)
+                    {
+                        Console.WriteLine(stringedName + " | " + stringedSuffixName +  " | " + generatedHash);
+                    }
+
+                    Parallel.ForEach(SoundAssetLog, hashedSound =>
+                    {
+                        if(hashedSound == generatedHash)
+                        {
+                            //stringedName = stringedName.Replace('.','\\');
+                            stringedName = stringedName.Replace('/','\\');
+
+                            string fullHash = generatedHash + "," + stringedName;
+                            GeneratedHashesSounds.WriteLine(fullHash);
+                            Console.WriteLine(fullHash);
+                        }
+                    });
+                });
+            });
+        }
+
+        GeneratedHashesSounds.Close();
     }
 
     static void SoundGuesser()
@@ -928,6 +1051,61 @@ class CODHashFinder
         }
     }
 
+    static void AliasHashes()
+    {
+        Console.WriteLine("Unhashing Aliases:\n");
+
+        if(File.Exists(@"Files\GeneratedHashesAliases.txt") != true)
+        {
+            var file = File.Create(@"Files\GeneratedHashesAliases.txt");
+            file.Close();
+        }
+
+        using StreamWriter GeneratedHashesAliases = new StreamWriter(@"Files\GeneratedHashesAliases.txt", true);
+
+        string[] AliasAssetLog = File.ReadAllLines(@"Files\Sound Banks\HashedAliases.txt");
+        string[] AliasNames = File.ReadAllLines(@"Files\Sound Banks\AliasNames.txt");
+        string[] AliasTypes = {"","plr_","npc_"};
+        string[] AliasStarts = {"wpn","fly"};
+        string[] WeaponNames = File.ReadAllLines(@"Files\Shared\NoPlatformWeaponNames.txt");
+
+        string[] foundHashes = [];
+
+        Parallel.ForEach(AliasNames, alias =>
+        {
+            Parallel.ForEach(WeaponNames, weaponName =>
+            {
+                Parallel.ForEach(AliasTypes, type =>
+                {
+                    Parallel.ForEach(AliasStarts, start =>
+                    {
+                        string stringedName = start + "_" + type + weaponName + "_" + alias;
+                        string generatedHash = CalcHashLegacy(stringedName);
+
+                        if(Globals.DebugToggle)
+                        {
+                            Console.WriteLine(stringedName + " | " + generatedHash);
+                        }
+
+                        Parallel.ForEach(AliasAssetLog, hashedAlias =>
+                        {
+                            if(hashedAlias == generatedHash)
+                            {
+                                string fullHash = hashedAlias + "," + stringedName;
+                                Console.WriteLine(fullHash);
+                                foundHashes = foundHashes.Append(fullHash).ToArray();
+                            }
+                        });
+                    });
+                });
+            });
+        });
+
+        foreach(string foundHash in foundHashes)
+        {
+            GeneratedHashesAliases.WriteLine(foundHash);
+        }
+    }
 
     static void OldAnims()
     {
@@ -975,6 +1153,55 @@ class CODHashFinder
         foreach(string foundHash in foundHashes)
         {
             GeneratedHashesAnims.WriteLine(foundHash);
+        }
+    }
+
+    static void OldBones()
+    {
+        Console.WriteLine("Checking old Bone Names:\n");
+
+        if(File.Exists(@"Files\GeneratedHashesBones.txt") != true)
+        {
+            var file = File.Create(@"Files\GeneratedHashesBones.txt");
+            file.Close();
+        }
+
+        using StreamWriter GeneratedHashesBones = new StreamWriter(@"Files\GeneratedHashesBones.txt", true);
+
+        string[] JupBoneAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPBoneAssetLog.txt");
+        string[] T10BoneAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10AnimAssetLog.txt");
+        string[] OldBones = File.ReadAllLines(@"Files\Old Hashes\OldBones.txt");
+
+        string[] foundHashes = [];
+
+        foreach(string boneName in OldBones)
+        {
+            string generatedHash = CalcHash(boneName);
+
+            Parallel.ForEach(JupBoneAssetLog, hashedBone =>
+            {
+                if(generatedHash == hashedBone)
+                {
+                    string fullHash = hashedBone + "," + boneName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                }
+            });
+
+            Parallel.ForEach(T10BoneAssetLog, hashedBone =>
+            {
+                if(generatedHash == hashedBone)
+                {
+                    string fullHash = hashedBone + "," + boneName;
+                    Console.WriteLine(fullHash);
+                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                }
+            });
+        }
+
+        foreach(string foundHash in foundHashes)
+        {
+            GeneratedHashesBones.WriteLine(foundHash);
         }
     }
 
@@ -1042,33 +1269,39 @@ class CODHashFinder
         string[] JupMaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPMaterialAssetLog.txt");
         string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
         string[] OldMaterials = File.ReadAllLines(@"Files\Old Hashes\OldMaterials.txt");
+        string[] MaterialFolders = File.ReadAllLines(@"Files\Materials\MaterialFolderNames.txt");
 
         string[] foundHashes = [];
 
-        foreach(string materialName in OldMaterials)
+        Parallel.ForEach(MaterialFolders, materialFolder =>
         {
-            string generatedHash = CalcHash(materialName);
-
-            Parallel.ForEach(JupMaterialAssetLog, hashedMaterial =>
+            Parallel.ForEach(OldMaterials, materialName =>
             {
-                if(generatedHash == hashedMaterial)
-                {
-                    string fullHash = hashedMaterial + "," + materialName;
-                    Console.WriteLine(fullHash);
-                    foundHashes = foundHashes.Append(fullHash).ToArray();
-                }
-            });
+                string stringedName = materialFolder + materialName;
+                string generatedHash = CalcHash(stringedName);
 
-            Parallel.ForEach(T10MaterialAssetLog, hashedMaterial =>
-            {
-                if(generatedHash == hashedMaterial)
+                Parallel.ForEach(JupMaterialAssetLog, hashedMaterial =>
                 {
-                    string fullHash = hashedMaterial + "," + materialName;
-                    Console.WriteLine(fullHash);
-                    foundHashes = foundHashes.Append(fullHash).ToArray();
-                }
+                    if(generatedHash == hashedMaterial)
+                    {
+                        string fullHash = hashedMaterial + "," + stringedName;
+                        Console.WriteLine(fullHash);
+                        foundHashes = foundHashes.Append(fullHash).ToArray();
+                    }
+                });
+
+                Parallel.ForEach(T10MaterialAssetLog, hashedMaterial =>
+                {
+                    if(generatedHash == hashedMaterial)
+                    {
+                        string fullHash = hashedMaterial + "," + stringedName;
+                        Console.WriteLine(fullHash);
+                        foundHashes = foundHashes.Append(fullHash).ToArray();
+                    }
+                });
             });
-        }
+        });
+        
 
         foreach(string foundHash in foundHashes)
         {
@@ -1127,7 +1360,58 @@ class CODHashFinder
 
     static void OldSounds()
     {
+        Console.WriteLine("Checking old Sound names:\n");
 
+        if(File.Exists(@"Files\GeneratedHashesSounds.txt") != true)
+        {
+            var file = File.Create(@"Files\GeneratedHashesSounds.txt");
+            file.Close();
+        }
+
+        using StreamWriter GeneratedHashesSounds = new StreamWriter(@"Files\GeneratedHashesSounds.txt", true);
+
+        string[] JupSoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUPsoundAssetLog.txt");
+        string[] T10SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10soundAssetLog.txt");
+        string[] OldSounds = File.ReadAllLines(@"Files\Old Hashes\OldSounds.txt");
+        string[] SoundSuffixes = File.ReadAllLines(@"Files\Sounds\SoundSuffixes.txt");
+
+        string[] foundHashes = [];
+
+        Parallel.ForEach(OldSounds, soundName =>
+        {
+            Parallel.ForEach(SoundSuffixes, soundSuffix =>
+            {
+                string stringedName = soundName + soundSuffix;
+                string generatedHash = CalcHash(stringedName);
+                stringedName = stringedName.Replace('/','\\');
+
+                Parallel.ForEach(JupSoundAssetLog, hashedSound =>
+                {
+                    if(generatedHash == hashedSound)
+                    {
+                        string fullHash = hashedSound + "," + stringedName;
+                        Console.WriteLine(fullHash);
+                        foundHashes = foundHashes.Append(fullHash).ToArray();
+                    }
+                });
+
+                Parallel.ForEach(T10SoundAssetLog, hashedSound =>
+                {
+                    if(generatedHash == hashedSound)
+                    {
+                        string fullHash = hashedSound + "," + stringedName;
+                        Console.WriteLine(fullHash);
+                        foundHashes = foundHashes.Append(fullHash).ToArray();
+                    }
+                });
+            });
+        });
+        
+
+        foreach(string foundHash in foundHashes)
+        {
+            GeneratedHashesSounds.WriteLine(foundHash);
+        }
     }
 
     static void OldSoundbanks()
@@ -1403,6 +1687,76 @@ class CODHashFinder
                 }
             }
         }
+    }
+
+    static void WordCombiner()
+    {
+        Console.WriteLine("Which asset type?\n");
+
+        string assetType = PickAssetType();
+        
+        //Console.WriteLine("Length?\n");
+
+        //int length = PickLength();
+
+        string[] WordsToCombine = File.ReadAllLines(@"Files\Shared\WordsToCombine.txt");
+        string[] JUPAssetLog = File.ReadAllLines(@"Files\Asset Logs\JUP" + assetType + "AssetLog.txt");
+        string[] T10AssetLog = File.ReadAllLines(@"Files\Asset Logs\T10" + assetType + "AssetLog.txt");
+
+        Console.WriteLine("Combining Words:\n");
+
+        Parallel.ForEach(WordsToCombine , word1 =>
+        {
+            Parallel.ForEach(WordsToCombine , word2 =>
+            {
+                Parallel.ForEach(WordsToCombine , word3 =>
+                {
+                    Parallel.ForEach(WordsToCombine , word4 =>
+                    {
+                        Parallel.ForEach(WordsToCombine , word5 =>
+                        {
+                            Parallel.ForEach(WordsToCombine , word6 =>
+                            {
+                                Parallel.ForEach(WordsToCombine , word7 =>
+                                {
+                                    Parallel.ForEach(WordsToCombine , word8 =>
+                                    {
+                                        string stringedName = word1 + "_" + word2 + "_" + word3 + "_" + word4 + "_" + word5 + "_" + word6 + "_" + word7 + "_" + word8;
+                                        if(assetType == "Material")
+                                        {
+                                            stringedName = "mo/" + stringedName;
+                                        }
+
+                                        string generatedHash = CalcHash(stringedName);
+
+                                        if(Globals.DebugToggle)
+                                        {
+                                            Console.WriteLine(stringedName + " | " + generatedHash);
+                                        }
+
+                                        Parallel.ForEach(JUPAssetLog , hashedAsset =>
+                                        {
+                                            if(hashedAsset == generatedHash)
+                                            {
+                                                Console.WriteLine(stringedName);
+                                            }
+                                        });
+
+                                        Parallel.ForEach(T10AssetLog , hashedAsset =>
+                                        {
+                                            if(hashedAsset == generatedHash)
+                                            {
+                                                Console.WriteLine(stringedName);
+                                            }
+                                        });
+                                    });
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
     }
 
     static void Hasher()
