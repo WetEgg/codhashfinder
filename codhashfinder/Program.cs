@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Globalization;
+using System.Net;
 
 public static class Globals
 {
@@ -784,6 +785,28 @@ class CODHashFinder
     {
         string game = PickGame();
 
+        for(;;)
+        {
+            Console.WriteLine("Do Variant Numbers?");
+            string ?response = Console.ReadLine();
+
+            if(response != null)
+            {
+                response = response.ToUpper();
+                
+                if(response == "Y" || response == "YES")
+                {
+                    string[] WeaponNumberSuffixes = File.ReadAllLines(@"Files\Sounds\WeaponNumberSuffixes.txt");
+                    break;
+                }
+                else if(response == "N" || response == "NO")
+                {
+                    string[] WeaponNumberSuffixes = {""};
+                    break;
+                }
+            }
+        }
+
         Console.WriteLine("Unhashing Sounds:\n");
 
         if(File.Exists(@"Files\GeneratedHashesSounds.txt") != true)
@@ -793,44 +816,57 @@ class CODHashFinder
         }
 
         string[] SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "SoundAssetLog.txt");
-        string[] SoundFolderPaths = File.ReadAllLines(@"Files\Sounds\SoundFolderPaths.txt");
-        string[] SoundNames = File.ReadAllLines(@"Files\Sounds\SoundNames.txt");
-        string[] WeaponNumberSuffixes = File.ReadAllLines(@"Files\Sounds\WeaponNumberSuffixes.txt");
+        string[] WeaponSoundFolderPaths = File.ReadAllLines(@"Files\Sounds\WeaponSoundFolderPaths" + game + ".txt");
+        string[] WeaponSoundCategories = File.ReadAllLines(@"Files\Sounds\WeaponSoundCategories" + game + ".txt");
+        string[] WeaponSoundNames = File.ReadAllLines(@"Files\Sounds\WeaponSoundNames" + game + ".txt");
+        string[] WeaponSoundSuffixes = File.ReadAllLines(@"Files\Sounds\WeaponSoundSuffixes" + game + ".txt");
 
         using StreamWriter GeneratedHashesSounds = new StreamWriter(@"Files\GeneratedHashesSounds.txt", true);
 
-        foreach(string soundFolder in SoundFolderPaths)
+        string[] foundHashes = [];
+
+        foreach(string soundFolder in WeaponSoundFolderPaths)
         {
-            Console.WriteLine("Current Folder: " + soundFolder);
-
-            Parallel.ForEach(SoundNames, soundName =>
+            if(soundFolder.Contains('*') == false)
             {
-                Parallel.ForEach(WeaponNumberSuffixes, weaponNumber =>
+                Console.WriteLine("Current Folder: " + soundFolder);
+
+                Parallel.ForEach(WeaponSoundCategories, soundCategory =>
                 {
-                    string stringedName = soundFolder + soundName;
-                    stringedName = stringedName.Replace("VARIANTNUMBER", weaponNumber);
-                    string stringedSuffixName = stringedName;
-                    string generatedHash = CalcHash(stringedSuffixName);
-
-                    if(Globals.DebugToggle)
+                    Parallel.ForEach(WeaponSoundNames, soundName =>
                     {
-                        Console.WriteLine(stringedName + " | " + stringedSuffixName +  " | " + generatedHash);
-                    }
-
-                    Parallel.ForEach(SoundAssetLog, hashedSound =>
-                    {
-                        if(hashedSound == generatedHash)
+                        Parallel.ForEach(WeaponSoundSuffixes, weaponSoundSuffix =>
                         {
-                            //stringedName = stringedName.Replace('.','\\');
-                            stringedName = stringedName.Replace('/','\\');
+                            string stringedName = soundFolder + soundCategory + "_" + soundName + "VARIANTNUMBER";
+                            stringedName = stringedName.Replace("VARIANTNUMBER", "");
+                            string stringedSuffixName = stringedName + weaponSoundSuffix;
+                            string generatedHash = CalcHash(stringedSuffixName);
 
-                            string fullHash = generatedHash + "," + stringedName;
-                            GeneratedHashesSounds.WriteLine(fullHash);
-                            Console.WriteLine(fullHash);
-                        }
+                            if(Globals.DebugToggle)
+                            {
+                                Console.WriteLine(stringedSuffixName +  " | " + generatedHash);
+                            }
+
+                            Parallel.ForEach(SoundAssetLog, hashedSound =>
+                            {
+                                if(hashedSound == generatedHash)
+                                {
+                                    stringedName = stringedName.Replace('/','\\');
+
+                                    string fullHash = generatedHash + "," + stringedName + weaponSoundSuffix;
+                                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                                    Console.WriteLine(fullHash);
+                                }
+                            });
+                        });
                     });
                 });
-            });
+
+                foreach(string foundHash in foundHashes)
+                {
+                    GeneratedHashesSounds.WriteLine(foundHash);
+                }
+            }
         }
 
         GeneratedHashesSounds.Close();
@@ -1065,9 +1101,10 @@ class CODHashFinder
 
         string[] AliasAssetLog = File.ReadAllLines(@"Files\Sound Banks\HashedAliases.txt");
         string[] AliasNames = File.ReadAllLines(@"Files\Sound Banks\AliasNames.txt");
-        string[] AliasTypes = {"","plr_","npc_"};
-        string[] AliasStarts = {"wpn","fly"};
+        string[] AliasTypes = File.ReadAllLines(@"Files\Sound Banks\AliasTypes.txt");
+        string[] AliasStarts = File.ReadAllLines(@"Files\Sound Banks\AliasStarts.txt");
         string[] WeaponNames = File.ReadAllLines(@"Files\Shared\NoPlatformWeaponNames.txt");
+        string[] AliasNumbers = File.ReadAllLines(@"Files\Sound Banks\AliasNumbers.txt");
 
         string[] foundHashes = [];
 
@@ -1079,22 +1116,25 @@ class CODHashFinder
                 {
                     Parallel.ForEach(AliasStarts, start =>
                     {
-                        string stringedName = start + "_" + type + weaponName + "_" + alias;
-                        string generatedHash = CalcHashLegacy(stringedName);
-
-                        if(Globals.DebugToggle)
+                        Parallel.ForEach(AliasNumbers, number => 
                         {
-                            Console.WriteLine(stringedName + " | " + generatedHash);
-                        }
+                            string stringedName = start + "_" + type + weaponName + "_" + alias + number;
+                            string generatedHash = CalcHashLegacy(stringedName);
 
-                        Parallel.ForEach(AliasAssetLog, hashedAlias =>
-                        {
-                            if(hashedAlias == generatedHash)
+                            if(Globals.DebugToggle)
                             {
-                                string fullHash = hashedAlias + "," + stringedName;
-                                Console.WriteLine(fullHash);
-                                foundHashes = foundHashes.Append(fullHash).ToArray();
+                                Console.WriteLine(stringedName + " | " + generatedHash);
                             }
+
+                            Parallel.ForEach(AliasAssetLog, hashedAlias =>
+                            {
+                                if(hashedAlias == generatedHash)
+                                {
+                                    string fullHash = hashedAlias + "," + stringedName;
+                                    Console.WriteLine(fullHash);
+                                    foundHashes = foundHashes.Append(fullHash).ToArray();
+                                }
+                            });
                         });
                     });
                 });
