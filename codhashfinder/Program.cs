@@ -285,7 +285,7 @@ class CODHashFinder
             result = 0x100000001B3 * (value ^ result);
         }
 
-        return String.Format("{0:x}", result & 0xFFFFFFFFFFFFFFF);
+        return String.Format("{0:x}", result & 0x7FFFFFFFFFFFFFFF);
     }
 
     static string CalcHashLegacy(string data)
@@ -304,8 +304,28 @@ class CODHashFinder
             result = 0x100000001B3 * (value ^ result);
         }
 
-        return String.Format("{0:x}", result & 0xFFFFFFFFFFFFFFF);
+        return String.Format("{0:x}", result & 0x7FFFFFFFFFFFFFFF);
     }
+    
+    static string CalcHash32(string data)
+    {
+        uint result = 0x811C9DC5;
+
+        for(int i = 0; i < Encoding.UTF8.GetByteCount( data ); i++)
+        {
+            uint value = data[i];
+
+            if(value == '\\')
+            {
+                value = '/';
+            }
+
+            result = 0x01000193 * (value ^ result);
+        }
+
+        return String.Format("{0:x}", result);
+    }
+
 
     static string PickGame()
     {
