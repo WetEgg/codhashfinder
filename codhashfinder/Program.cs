@@ -78,8 +78,6 @@ class CODHashFinder
 
                 91 - Asset Logs
 
-                97 - Word Combiner
-
                 98 - Hasher
 
                 99 - Toggle Debug
@@ -104,13 +102,13 @@ class CODHashFinder
                     {
                         case "11":
                         {
-                            MW6Anims();
+                            MW6Animations();
 
                             break;
                         }
                         case "12":
                         {
-                            T10Anims();
+                            T10Animations();
 
                             break;
                         }
@@ -188,7 +186,7 @@ class CODHashFinder
                         }
                         case "81":
                         {
-                            OldAnims();
+                            OldAnimations();
 
                             break;
                         }
@@ -240,12 +238,6 @@ class CODHashFinder
 
                             break;
                         }
-                        case "97":
-                        {
-                            WordCombiner();
-
-                            break;
-                        }
                         case "98":
                         {
                             Hasher();
@@ -269,11 +261,11 @@ class CODHashFinder
         }
     }
 
-    static string CalcHash(string data)
+    static string CalcHash64(string data)
     {
         ulong result = 0x47F5817A5EF961BA;
 
-        for(int i = 0; i < Encoding.UTF8.GetByteCount( data ); i++)
+        for(int i = 0; i < Encoding.UTF8.GetByteCount(data); i++)
         {
             ulong value = data[i];
 
@@ -285,53 +277,71 @@ class CODHashFinder
             result = 0x100000001B3 * (value ^ result);
         }
 
-        return String.Format("{0:x}", result & 0xFFFFFFFFFFFFFFF);
+        return String.Format("{0:x}", result & 0x7FFFFFFFFFFFFFFF);
     }
-
-    static string CalcHashLegacy(string data)
+    
+    static string CalcHash32(string data)
     {
         ulong result = 0xCBF29CE484222325;
-
-        for(int i = 0; i < Encoding.UTF8.GetByteCount( data ); i++)
+        
+        for (int i = 0; i < Encoding.UTF8.GetByteCount(data); i++)
         {
             ulong value = data[i];
-
-            if(value == '\\')
+            if (value == '\\')
             {
                 value = '/';
             }
 
             result = 0x100000001B3 * (value ^ result);
         }
+        
+        return String.Format("{0:x}", result & 0x7FFFFFFFFFFFFFFF);
+    }
 
-        return String.Format("{0:x}", result & 0xFFFFFFFFFFFFFFF);
+    static string CalcHash32Bones(string data)
+    {
+        uint result = 0x811C9DC5;
+
+        for (int i = 0; i < Encoding.UTF8.GetByteCount(data); i++)
+        {
+            uint value = data[i];
+
+            if (value == '\\')
+            {
+                value = '/';
+            }
+
+            result = 0x01000193 * (value ^ result);
+        }
+
+        return String.Format("{0:x}", result);
     }
 
     static string PickGame()
     {
-        for(;;)
+        for (; ; )
         {
             Console.WriteLine("MW5, MW6 or T10?\n");
 
             string? userResponse = Console.ReadLine();
 
-            switch(userResponse)
+            switch (userResponse)
             {
                 case "t10":
                 case "T10":
-                {
-                    return "T10";
-                }
+                    {
+                        return "T10";
+                    }
                 case "mw6":
                 case "MW6":
-                {
-                    return "MW6";
-                }
+                    {
+                        return "MW6";
+                    }
                 case "mw5":
                 case "MW5":
-                {
-                    return "MW5";
-                }
+                    {
+                        return "MW5";
+                    }
             }
         }
     }
@@ -375,39 +385,39 @@ class CODHashFinder
         }
     }
 
-    static void MW6Anims()
+    static void MW6Animations()
     {
         Console.WriteLine("Generating MW6 Anim Hashes:\n");
 
-        string[] MW6VMTypes = File.ReadAllLines(@"Files\Anims\VMTypes.txt");
-        string[] MW6AnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6AnimAssetLog.txt");
-        string[] SharedWeaponNamesAnims = File.ReadAllLines(@"Files\Shared\WeaponNamesAnims.txt");
+        string[] MW6VMTypes = File.ReadAllLines(@"Files\Animations\VMTypes.txt");
+        string[] MW6AnimationAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6\MW6Animations.txt");
+        string[] SharedWeaponNamesAnimations = File.ReadAllLines(@"Files\Shared\WeaponNamesAnimations.txt");
 
-        if(File.Exists(@"Files\GeneratedHashesAnims.txt") != true)
+        if(File.Exists(@"Files\GeneratedHashesAnimations.txt") != true)
         {
-            var file = File.Create(@"Files\GeneratedHashesAnims.txt");
+            var file = File.Create(@"Files\GeneratedHashesAnimations.txt");
             file.Close();
         }
 
-        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt", true);
+        using StreamWriter GeneratedHashesAnimations = new StreamWriter(@"Files\GeneratedHashesAnimations.txt", true);
 
         string[] foundHashes = [];
 
         Parallel.ForEach(MW6VMTypes, animType =>
         {
-            Parallel.ForEach(SharedWeaponNamesAnims, weaponName =>
+            Parallel.ForEach(SharedWeaponNamesAnimations, weaponName =>
             {
                 if(weaponName != "")
                 {
                     string stringedName = "mw6_vm_" + weaponName + "_" + animType;
-                    string generatedHash = CalcHash(stringedName);
+                    string generatedHash = CalcHash64(stringedName);
 
                     if(Globals.DebugToggle)
                     {
                         Console.WriteLine(stringedName);
                     }
 
-                    Parallel.ForEach(MW6AnimAssetLog, hash =>
+                    Parallel.ForEach(MW6AnimationAssetLog, hash =>
                     {
                         if(generatedHash == hash)
                         {
@@ -422,43 +432,49 @@ class CODHashFinder
 
         foreach(string foundHash in foundHashes)
         {
-            GeneratedHashesAnims.WriteLine(foundHash);
+            GeneratedHashesAnimations.WriteLine(foundHash);
         }
     }
 
-    static void T10Anims()
+    static void T10Animations()
     {
         Console.WriteLine("Generating T10 Anim Hashes:\n");
 
-        string[] T10VMTypes = File.ReadAllLines(@"Files\Anims\VMTypes.txt");
-        string[] T10AnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10AnimAssetLog.txt");
-        string[] SharedWeaponNamesAnims = File.ReadAllLines(@"Files\Shared\WeaponNamesAnims.txt");
+        string[] T10VMTypes = File.ReadAllLines(@"Files\Animations\VMTypes.txt");
+        string[] T10WMTypes = File.ReadAllLines(@"Files\Animations\WMTypes.txt");
+        string[] T10WMStances = File.ReadAllLines(@"Files\Animations\WMStances.txt");
+        string[] T10WMAttTypes = File.ReadAllLines(@"Files\Animations\WMAttTypes.txt");
+        string[] T10WMNames = File.ReadAllLines(@"Files\Animations\T10WMNames.txt");
+        string[] T10AnimationAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Animations.txt");
+        string[] SharedWeaponNamesAnimations = File.ReadAllLines(@"Files\Shared\WeaponNamesAnimations.txt");
+        string[] T10WMSuffixes = File.ReadAllLines(@"Files\Animations\T10WMSuffixes.txt");
+        string[] T10WMDetails = File.ReadAllLines(@"Files\Animations\T10WMDetails.txt");
 
-        if(File.Exists(@"Files\GeneratedHashesAnims.txt") != true)
+        if (File.Exists(@"Files\GeneratedHashesAnimations.txt") != true)
         {
-            var file = File.Create(@"Files\GeneratedHashesAnims.txt");
+            var file = File.Create(@"Files\GeneratedHashesAnimations.txt");
             file.Close();
         }
 
-        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt", true);
+        using StreamWriter GeneratedHashesAnimations = new StreamWriter(@"Files\GeneratedHashesAnimations.txt", true);
 
         string[] foundHashes = [];
 
         Parallel.ForEach(T10VMTypes, animType =>
         {
-            Parallel.ForEach(SharedWeaponNamesAnims, weaponName =>
+            Parallel.ForEach(SharedWeaponNamesAnimations, weaponName =>
             {
                 if(weaponName != "")
                 {
                     string stringedName = "vm_" + weaponName + "_" + animType;
-                    string generatedHash = CalcHash(stringedName);
+                    string generatedHash = CalcHash64(stringedName);
 
                     if(Globals.DebugToggle)
                     {
                         Console.WriteLine(stringedName);
                     }
 
-                    Parallel.ForEach(T10AnimAssetLog, hash =>
+                    Parallel.ForEach(T10AnimationAssetLog, hash =>
                     {
                         if(generatedHash == hash)
                         {
@@ -473,19 +489,19 @@ class CODHashFinder
 
         Parallel.ForEach(T10VMTypes, animType =>
         {
-            Parallel.ForEach(SharedWeaponNamesAnims, weaponName =>
+            Parallel.ForEach(SharedWeaponNamesAnimations, weaponName =>
             {
                 if(weaponName != "")
                 {
                     string stringedName = "t10_vm_" + weaponName + "_" + animType;
-                    string generatedHash = CalcHash(stringedName);
+                    string generatedHash = CalcHash64(stringedName);
 
                     if(Globals.DebugToggle)
                     {
                         Console.WriteLine(stringedName);
                     }
 
-                    Parallel.ForEach(T10AnimAssetLog, hash =>
+                    Parallel.ForEach(T10AnimationAssetLog, hash =>
                     {
                         if(generatedHash == hash)
                         {
@@ -498,9 +514,51 @@ class CODHashFinder
             });
         });
 
+        Parallel.ForEach(T10WMTypes, animType =>
+        {
+            Parallel.ForEach(T10WMStances, stanceType =>
+            {
+                Parallel.ForEach(T10WMAttTypes, attType =>
+                {
+                    Parallel.ForEach(SharedWeaponNamesAnimations, weaponName =>
+                    {
+                        Parallel.ForEach(T10WMNames, wmName =>
+                        {
+                            Parallel.ForEach(T10WMSuffixes, suffixType =>
+                            {
+                                Parallel.ForEach(T10WMDetails, details =>
+                                {
+                                    if (weaponName != "")
+                                    {
+                                        string stringedName = wmName + weaponName + animType + stanceType + attType + details + suffixType;
+                                        string generatedHash = CalcHash64(stringedName);
+
+                                        if (Globals.DebugToggle)
+                                        {
+                                            Console.WriteLine(stringedName);
+                                        }
+
+                                        Parallel.ForEach(T10AnimationAssetLog, hash =>
+                                        {
+                                            if (generatedHash == hash)
+                                            {
+                                                string fullHash = generatedHash + "," + stringedName;
+                                                foundHashes = foundHashes.Append(fullHash).ToArray();
+                                                Console.WriteLine(fullHash);
+                                            }
+                                        });
+                                    }
+                                });
+                            });
+                        });
+                    });
+                });
+            });
+        });
+
         foreach(string foundHash in foundHashes)
         {
-            GeneratedHashesAnims.WriteLine(foundHash);
+            GeneratedHashesAnimations.WriteLine(foundHash);
         }
     }
 
@@ -541,7 +599,7 @@ class CODHashFinder
                                 Console.WriteLine(stringedName + " | " + animpackageHashed);
                             }
 
-                            if (CalcHash(stringedName) == animpackageHashed)
+                            if (CalcHash64(stringedName) == animpackageHashed)
                             {
                                 if (File.Exists(@"Files\Anim Packages\anim_pkgs_" + game1 + "\\animpkg_" + animpackageHashed + ".csv"))
                                 {
@@ -573,7 +631,7 @@ class CODHashFinder
                                 Console.WriteLine(stringedName + " | " + animpackageHashed);
                             }
 
-                            if (CalcHash(stringedName) == animpackageHashed)
+                            if (CalcHash64(stringedName) == animpackageHashed)
                             {
                                 if (File.Exists(@"Files\Anim Packages\anim_pkgs_" + game1 + "\\animpkg_" + animpackageHashed + ".json"))
                                 {
@@ -594,7 +652,7 @@ class CODHashFinder
 
         Console.WriteLine("Generating Image names from Materials:\n");
 
-        string[] ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "ImageAssetLog.txt");
+        string[] ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "\\" + game + "Images.txt");
         string[] MaterialNames = File.ReadAllLines(@"Files\Images\MaterialNames.txt");
         string[] TextureTypes = File.ReadAllLines(@"Files\Images\TextureNames.txt");
 
@@ -607,7 +665,7 @@ class CODHashFinder
             Parallel.ForEach(TextureTypes, textureType =>
             {
                 string stringedName = materialName + "_" + textureType;
-                string generatedHash = CalcHash(stringedName);
+                string generatedHash = CalcHash64(stringedName);
 
                 if(Globals.DebugToggle)
                 {
@@ -636,7 +694,7 @@ class CODHashFinder
     {
         Console.WriteLine("Generating MW6 Material Names:\n");
 
-        string[] MW6MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6MaterialAssetLog.txt");
+        string[] MW6MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6\MW6Materials.txt");
         string[] MaterialKeywords = File.ReadAllLines(@"Files\Materials\Keywords.txt");
         string[] MW6Numbers = File.ReadAllLines(@"Files\Materials\MW6Numbers.txt");
         string[] MW6WeaponNames = File.ReadAllLines(@"Files\Shared\MW6WeaponNames.txt");
@@ -655,7 +713,7 @@ class CODHashFinder
                     Parallel.ForEach(MaterialFolders, MaterialFolder =>
                     {
                         string stringedName = MaterialFolder + "mtl_mw6_" + MW6WeaponName + "_" + Keyword + MW6Number;
-                        string generatedHash = CalcHash(stringedName);
+                        string generatedHash = CalcHash64(stringedName);
 
                         if(Globals.DebugToggle)
                         {
@@ -686,7 +744,7 @@ class CODHashFinder
     {
         Console.WriteLine("Generating T10 Material Names:\n");
         
-        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
+        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Materials.txt");
         string[] MaterialKeywords = File.ReadAllLines(@"Files\Materials\Keywords.txt");
         string[] T10WeaponNames = File.ReadAllLines(@"Files\Shared\T10WeaponNames.txt");
         string[] MaterialFolders = File.ReadAllLines(@"Files\Materials\MaterialFolderNames.txt");
@@ -702,7 +760,7 @@ class CODHashFinder
                 Parallel.ForEach(MaterialFolders, MaterialFolder =>
                 {
                     string stringedName = MaterialFolder + "mtl_wpn_t10_" + T10WeaponName + "_" + Keyword;
-                    string generatedHash = CalcHash(stringedName);
+                    string generatedHash = CalcHash64(stringedName);
 
                     if(Globals.DebugToggle)
                     {
@@ -732,7 +790,7 @@ class CODHashFinder
     {
         Console.WriteLine("Generating T10 Material Names From Models:\n");
         
-        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
+        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Materials.txt");
         string[] T10ModelNames = File.ReadAllLines(@"Files\Materials\T10WeaponModelNames.txt");
         string[] MaterialFolders = File.ReadAllLines(@"Files\Materials\MaterialFolderNames.txt");
 
@@ -745,7 +803,7 @@ class CODHashFinder
             Parallel.ForEach(MaterialFolders, MaterialFolder =>
             {
                 string stringedName = MaterialFolder + "mtl_" + T10ModelName;
-                string generatedHash = CalcHash(stringedName);
+                string generatedHash = CalcHash64(stringedName);
 
                 if(Globals.DebugToggle)
                 {
@@ -776,7 +834,7 @@ class CODHashFinder
 
         Console.WriteLine("Generating Blueprint Material Names:\n");
 
-        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
+        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Materials.txt");
         string[] T10BPNames = File.ReadAllLines(@"Files\Materials\T10BlueprintNames.txt");
         string[] T10WeaponNames = File.ReadAllLines(@"Files\Shared\T10WeaponNames.txt");
         string[] MaterialKeywords = File.ReadAllLines(@"Files\Materials\Keywords.txt");
@@ -798,7 +856,7 @@ class CODHashFinder
                         Parallel.ForEach(MaterialFolders, MaterialFolder =>
                         {
                             string stringedName = MaterialFolder + "mtl" + type + "_t10_" + T10WeaponName + "_" + Keyword + BPName;
-                            string generatedHash = CalcHash(stringedName);
+                            string generatedHash = CalcHash64(stringedName);
 
                             if(Globals.DebugToggle)
                             {
@@ -838,7 +896,7 @@ class CODHashFinder
             file.Close();
         }
 
-        string[] SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "SoundAssetLog.txt");
+        string[] SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "\\" + game + "Sounds.txt");
         string[] WeaponSoundFolderPaths = File.ReadAllLines(@"Files\Sounds\WeaponSoundFolderPaths" + game + ".txt");
         string[] WeaponSoundCategories = File.ReadAllLines(@"Files\Sounds\WeaponSoundCategories" + game + ".txt");
         string[] WeaponSoundNames = File.ReadAllLines(@"Files\Sounds\WeaponSoundNames" + game + ".txt");
@@ -863,7 +921,7 @@ class CODHashFinder
                             Parallel.ForEach(WeaponSoundSuffixes, weaponSoundSuffix =>
                             {
                                 string stringedName = soundFolder + soundCategory + soundName;
-                                string generatedHash = CalcHash(stringedName + weaponSoundSuffix);
+                                string generatedHash = CalcHash64(stringedName + weaponSoundSuffix);
 
                                 if(Globals.DebugToggle)
                                 {
@@ -910,7 +968,7 @@ class CODHashFinder
 
         for(;;)
         {
-            string[] SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "SoundAssetLog.txt");
+            string[] SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "\\" + game + "Sounds.txt");
             string[] SoundSuffixes = File.ReadAllLines(@"Files\Sounds\SoundSuffixes.txt");
 
             string? userResponse = Console.ReadLine();
@@ -926,7 +984,7 @@ class CODHashFinder
                 Parallel.ForEach(SoundSuffixes, suffix =>
                 {
                     string stringedName = userResponse + suffix;
-                    string generatedHash = CalcHash(stringedName);
+                    string generatedHash = CalcHash64(stringedName);
 
                     Parallel.ForEach(SoundAssetLog, hashedSound =>
                     {
@@ -981,7 +1039,7 @@ class CODHashFinder
                             Console.WriteLine(stringedName + " | " + soundbankHashed);
                         }
 
-                        if(CalcHash(stringedName) == soundbankHashed)
+                        if(CalcHash64(stringedName) == soundbankHashed)
                         {
                             if(File.Exists(@"Files\Sound Banks\soundbank_" + game1 + "\\soundbank_" + soundbankHashed + ".csv"))
                             {
@@ -1012,7 +1070,7 @@ class CODHashFinder
                             Console.WriteLine(stringedName + " | " + soundbankTRHashed);
                         }
 
-                        if(CalcHash(stringedName) == soundbankTRHashed)
+                        if(CalcHash64(stringedName) == soundbankTRHashed)
                         {
                             if(File.Exists(@"Files\Sound Banks\soundbanktr_" + game1 + "\\soundbanktr_" + soundbankTRHashed + ".csv"))
                             {
@@ -1069,7 +1127,7 @@ class CODHashFinder
                             Console.WriteLine(stringedName + " | " + soundbankHashed);
                         }
 
-                        if(CalcHash(stringedName) == soundbankHashed)
+                        if(CalcHash64(stringedName) == soundbankHashed)
                         {
                             if(File.Exists(@"Files\Sound Banks\soundbank_" + game1 + "\\soundbank_" + soundbankHashed + ".csv"))
                             {
@@ -1097,7 +1155,7 @@ class CODHashFinder
                             Console.WriteLine(stringedName + " | " + soundbankTRHashed);
                         }
 
-                        if(CalcHash(stringedName) == soundbankTRHashed)
+                        if(CalcHash64(stringedName) == soundbankTRHashed)
                         {
                             if(File.Exists(@"Files\Sound Banks\soundbanktr_" + game1 + "\\soundbanktr_" + soundbankTRHashed + ".csv"))
                             {
@@ -1143,7 +1201,7 @@ class CODHashFinder
                         Parallel.ForEach(AliasNumbers, number => 
                         {
                             string stringedName = start + "_" + type + weaponName + "_" + alias + number;
-                            string generatedHash = CalcHashLegacy(stringedName);
+                            string generatedHash = CalcHash32(stringedName);
 
                             if(Globals.DebugToggle)
                             {
@@ -1171,30 +1229,30 @@ class CODHashFinder
         }
     }
 
-    static void OldAnims()
+    static void OldAnimations()
     {
         Console.WriteLine("Checking old Anim Names:\n");
 
-        if(File.Exists(@"Files\GeneratedHashesAnims.txt") != true)
+        if(File.Exists(@"Files\GeneratedHashesAnimations.txt") != true)
         {
-            var file = File.Create(@"Files\GeneratedHashesAnims.txt");
+            var file = File.Create(@"Files\GeneratedHashesAnimations.txt");
             file.Close();
         }
 
-        using StreamWriter GeneratedHashesAnims = new StreamWriter(@"Files\GeneratedHashesAnims.txt", true);
+        using StreamWriter GeneratedHashesAnimations = new StreamWriter(@"Files\GeneratedHashesAnimations.txt", true);
 
-        string[] MW5AnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5AnimAssetLog.txt");
-        string[] MW6AnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6AnimAssetLog.txt");
-        string[] T10AnimAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10AnimAssetLog.txt");
-        string[] OldAnims = File.ReadAllLines(@"Files\Old Hashes\OldAnims.txt");
+        string[] MW5AnimationAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5\MW5Animations.txt");
+        string[] MW6AnimationAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6\MW6Animations.txt");
+        string[] T10AnimationAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Animations.txt");
+        string[] OldAnimations = File.ReadAllLines(@"Files\Old Hashes\OldAnimations.txt");
 
         string[] foundHashes = [];
 
-        foreach(string animName in OldAnims)
+        foreach(string animName in OldAnimations)
         {
-            string generatedHash = CalcHash(animName);
+            string generatedHash = CalcHash64(animName);
 
-            Parallel.ForEach(MW5AnimAssetLog, hashedAnim =>
+            Parallel.ForEach(MW5AnimationAssetLog, hashedAnim =>
             {
                 if(generatedHash == hashedAnim)
                 {
@@ -1204,7 +1262,7 @@ class CODHashFinder
                 }
             });
 
-            Parallel.ForEach(MW6AnimAssetLog, hashedAnim =>
+            Parallel.ForEach(MW6AnimationAssetLog, hashedAnim =>
             {
                 if(generatedHash == hashedAnim)
                 {
@@ -1214,7 +1272,7 @@ class CODHashFinder
                 }
             });
 
-            Parallel.ForEach(T10AnimAssetLog, hashedAnim =>
+            Parallel.ForEach(T10AnimationAssetLog, hashedAnim =>
             {
                 if(generatedHash == hashedAnim)
                 {
@@ -1227,7 +1285,7 @@ class CODHashFinder
 
         foreach(string foundHash in foundHashes)
         {
-            GeneratedHashesAnims.WriteLine(foundHash);
+            GeneratedHashesAnimations.WriteLine(foundHash);
         }
     }
 
@@ -1243,16 +1301,16 @@ class CODHashFinder
 
         using StreamWriter GeneratedHashesBones = new StreamWriter(@"Files\GeneratedHashesBones.txt", true);
 
-        string[] MW5BoneAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5BoneAssetLog.txt");
-        string[] MW6BoneAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6BoneAssetLog.txt");
-        string[] T10BoneAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10AnimAssetLog.txt");
+        string[] MW5BoneAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5\MW5Bones.txt");
+        string[] MW6BoneAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6\MW6Bones.txt");
+        string[] T10BoneAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Bones.txt");
         string[] OldBones = File.ReadAllLines(@"Files\Old Hashes\OldBones.txt");
 
         string[] foundHashes = [];
 
         foreach(string boneName in OldBones)
         {
-            string generatedHash = CalcHash(boneName);
+            string generatedHash = CalcHash64(boneName);
 
             Parallel.ForEach(MW5BoneAssetLog, hashedBone =>
             {
@@ -1303,16 +1361,16 @@ class CODHashFinder
 
         using StreamWriter GeneratedHashesImages = new StreamWriter(@"Files\GeneratedHashesImages.txt", true);
 
-        string[] MW5ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5ImageAssetLog.txt");
-        string[] MW6ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6ImageAssetLog.txt");
-        string[] T10ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10ImageAssetLog.txt");
+        string[] MW5ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5\MW5Images.txt");
+        string[] MW6ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6\MW6Images.txt");
+        string[] T10ImageAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Images.txt");
         string[] OldImages = File.ReadAllLines(@"Files\Old Hashes\OldImages.txt");
 
         string[] foundHashes = [];
 
         foreach(string imageName in OldImages)
         {
-            string generatedHash = CalcHash(imageName);
+            string generatedHash = CalcHash64(imageName);
 
             Parallel.ForEach(MW5ImageAssetLog, hashedImage =>
             {
@@ -1363,9 +1421,9 @@ class CODHashFinder
 
         using StreamWriter GeneratedHashesMaterials = new StreamWriter(@"Files\GeneratedHashesMaterials.txt", true);
 
-        string[] MW5MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5MaterialAssetLog.txt");
-        string[] MW6MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6MaterialAssetLog.txt");
-        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10MaterialAssetLog.txt");
+        string[] MW5MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5\MW5Materials.txt");
+        string[] MW6MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6\MW6Materials.txt");
+        string[] T10MaterialAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Materials.txt");
         string[] OldMaterials = File.ReadAllLines(@"Files\Old Hashes\OldMaterials.txt");
         string[] MaterialFolders = File.ReadAllLines(@"Files\Materials\MaterialFolderNames.txt");
 
@@ -1376,7 +1434,7 @@ class CODHashFinder
             Parallel.ForEach(OldMaterials, materialName =>
             {
                 string stringedName = materialFolder + materialName;
-                string generatedHash = CalcHash(stringedName);
+                string generatedHash = CalcHash64(stringedName);
 
                 Parallel.ForEach(MW5MaterialAssetLog, hashedMaterial =>
                 {
@@ -1429,16 +1487,16 @@ class CODHashFinder
 
         using StreamWriter GeneratedHashesModels = new StreamWriter(@"Files\GeneratedHashesModel.txt", true);
 
-        string[] MW5ModelAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5ModelAssetLog.txt");
-        string[] MW6ModelAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6ModelAssetLog.txt");
-        string[] T10ModelAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10ModelAssetLog.txt");
+        string[] MW5ModelAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5\MW5Models.txt");
+        string[] MW6ModelAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6\MW6Models.txt");
+        string[] T10ModelAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10Models.txt");
         string[] OldModels = File.ReadAllLines(@"Files\Old Hashes\OldModels.txt");
 
         string[] foundHashes = [];
 
         foreach(string modelName in OldModels)
         {
-            string generatedHash = CalcHash(modelName);
+            string generatedHash = CalcHash64(modelName);
 
             Parallel.ForEach(MW5ModelAssetLog, hashedModel =>
             {
@@ -1489,9 +1547,9 @@ class CODHashFinder
 
         using StreamWriter GeneratedHashesSounds = new StreamWriter(@"Files\GeneratedHashesSounds.txt", true);
 
-        string[] MW5SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5soundAssetLog.txt");
-        string[] MW6SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6soundAssetLog.txt");
-        string[] T10SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10soundAssetLog.txt");
+        string[] MW5SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW5\MW5sounds.txt");
+        string[] MW6SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6\MW6sounds.txt");
+        string[] T10SoundAssetLog = File.ReadAllLines(@"Files\Asset Logs\T10\T10sounds.txt");
         string[] OldSounds = File.ReadAllLines(@"Files\Old Hashes\OldSounds.txt");
         string[] SoundSuffixes = File.ReadAllLines(@"Files\Sounds\SoundSuffixes.txt");
 
@@ -1502,7 +1560,7 @@ class CODHashFinder
             Parallel.ForEach(SoundSuffixes, soundSuffix =>
             {
                 string stringedName = soundName + soundSuffix;
-                string generatedHash = CalcHash(stringedName);
+                string generatedHash = CalcHash64(stringedName);
                 stringedName = stringedName.Replace('/','\\');
 
                 Parallel.ForEach(MW5SoundAssetLog, hashedSound =>
@@ -1573,7 +1631,7 @@ class CODHashFinder
                             Console.WriteLine(stringedName + " | " + soundbankHashed);
                         }
 
-                        if(CalcHash(stringedName) == soundbankHashed)
+                        if(CalcHash64(stringedName) == soundbankHashed)
                         {
                             if(File.Exists(@"Files\Sound Banks\soundbank_mw6\\soundbank_" + soundbankHashed + ".csv"))
                             {
@@ -1601,7 +1659,7 @@ class CODHashFinder
                             Console.WriteLine(stringedName + " | " + soundbankTRHashed);
                         }
 
-                        if(CalcHash(stringedName) == soundbankTRHashed)
+                        if(CalcHash64(stringedName) == soundbankTRHashed)
                         {
                             if(File.Exists(@"Files\Sound Banks\soundbanktr_mw6\\soundbanktr_" + soundbankTRHashed + ".csv"))
                             {
@@ -1629,7 +1687,7 @@ class CODHashFinder
                             Console.WriteLine(stringedName + " | " + soundbankHashed);
                         }
 
-                        if(CalcHash(stringedName) == soundbankHashed)
+                        if(CalcHash64(stringedName) == soundbankHashed)
                         {
                             if(File.Exists(@"Files\Sound Banks\soundbank_bo6\\soundbank_" + soundbankHashed + ".csv"))
                             {
@@ -1657,7 +1715,7 @@ class CODHashFinder
                             Console.WriteLine(stringedName + " | " + soundbankTRHashed);
                         }
 
-                        if(CalcHash(stringedName) == soundbankTRHashed)
+                        if(CalcHash64(stringedName) == soundbankTRHashed)
                         {
                             if(File.Exists(@"Files\Sound Banks\soundbanktr_bo6\\soundbanktr_" + soundbankTRHashed + ".csv"))
                             {
@@ -1704,7 +1762,7 @@ class CODHashFinder
                         Console.WriteLine(stringedName + " | " + animpackageHashed);
                     }
 
-                    if(CalcHash(stringedName) == animpackageHashed)
+                    if(CalcHash64(stringedName) == animpackageHashed)
                     {
                         if(File.Exists(@"Files\Anim Packages\anim_pkgs_mw6\\animpkg_" + animpackageHashed + ".csv"))
                         {
@@ -1728,7 +1786,7 @@ class CODHashFinder
                         Console.WriteLine(stringedName + " | " + animpackageHashed);
                     }
 
-                    if(CalcHash(stringedName) == animpackageHashed)
+                    if(CalcHash64(stringedName) == animpackageHashed)
                     {
                         if(File.Exists(@"Files\Anim Packages\anim_pkgs_bo6\\" + animpackageHashed + ".json"))
                         {
@@ -1786,7 +1844,7 @@ class CODHashFinder
                         Console.WriteLine(stringedName + " | " + animpackageHashed);
                     }
 
-                    if(stringedName != null && CalcHash(stringedName) == animpackageHashed)
+                    if(stringedName != null && CalcHash64(stringedName) == animpackageHashed)
                     {
                         if(File.Exists(@"Files\Anim Packages\anim_pkgs_" + game1 + "\\0x" + animpackageHashed + ".json"))
                         {
@@ -1803,182 +1861,118 @@ class CODHashFinder
     {
         string game = PickGame();
 
-        string[] AssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "AssetLog.txt");
+        string[] AssetLog = File.ReadAllLines(@"Files\Asset Logs\" + game + "\\" + game + "AssetsLog.txt");
 
-        using StreamWriter AnimAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "AnimAssetLog.txt");
-        using StreamWriter AnimAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "AnimAssetLogForUnhashing.txt");
+        using StreamWriter AnimationAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "Animations.txt");
+        using StreamWriter AnimationAssetLogUnhashed = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "AnimationsUnhashed.txt");
 
-        using StreamWriter ImageAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "ImageAssetLog.txt");
-        using StreamWriter ImageAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "ImageAssetLogForUnhashing.txt");
+        using StreamWriter ImageAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "Images.txt");
+        using StreamWriter ImageAssetLogUnhashed = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "ImagesUnhashed.txt");
 
-        using StreamWriter MaterialAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "MaterialAssetLog.txt");
-        using StreamWriter MaterialAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "MaterialAssetLogForUnhashing.txt");
+        using StreamWriter MaterialAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "Materials.txt");
+        using StreamWriter MaterialAssetLogUnhashed = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "MaterialsUnhashed.txt");
 
-        using StreamWriter ModelAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "ModelAssetLog.txt");
-        using StreamWriter ModelAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "ModelAssetLogForUnhashing.txt");
+        using StreamWriter ModelAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "Models.txt");
+        using StreamWriter ModelAssetLogUnhashed = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "ModelsUnhashed.txt");
 
-        using StreamWriter SoundAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "SoundAssetLog.txt");
-        using StreamWriter SoundAssetLogForUnhashing = new StreamWriter(@"Files\Asset Logs\" + game + "SoundAssetLogForUnhashing.txt");
+        using StreamWriter SoundAssetLog = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "Sounds.txt");
+        using StreamWriter SoundAssetLogUnhashed = new StreamWriter(@"Files\Asset Logs\" + game + "\\" + game + "SoundsUnhashed.txt");
 
         foreach(string hash in AssetLog)
         {
             string assetType = hash.Substring(0, hash.IndexOf(','));
-            string result = hash.Substring(hash.IndexOf(',') + 1);
+            //string result = hash.Substring(hash.IndexOf(',') + 1);
+            string result = "";
 
-            switch(assetType)
+            switch (assetType)
             {
-                case "Anim":
-                {
-                    if(hash.Contains("xanim_"))
+                case "Animation":
                     {
-                        //Hashed Anims
-                        result = result.Replace("xanim_","");
-                        AnimAssetLog.WriteLine(result);
-                    }
-                    else
-                    {
-                        //Unhashed Anims
-                        AnimAssetLogForUnhashing.WriteLine(result);
-                    }
+                        if (hash.Contains("Animation,anim_"))
+                        {
+                            //Hashed Animations
+                            result = hash.Replace("Animation,anim_", "");
+                            AnimationAssetLog.WriteLine(result);
+                        }
+                        else
+                        {
+                            //Unhashed Animations
+                            result = hash.Replace("Animation,", "");
+                            AnimationAssetLogUnhashed.WriteLine(result);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case "Image":
-                {
-                    if(hash.Contains("ximage_"))
                     {
-                        //Hashed Images
-                        result = result.Replace("ximage_","");
-                        ImageAssetLog.WriteLine(result);
-                    }
-                    else
-                    {
-                        //Unhashed Images
-                        ImageAssetLogForUnhashing.WriteLine(result);
-                    }
+                        if (hash.Contains("Image,image_"))
+                        {
+                            //Hashed Images
+                            result = hash.Replace("Image,image_", "");
+                            ImageAssetLog.WriteLine(result);
+                        }
+                        else
+                        {
+                            //Unhashed Images
+                            result = hash.Replace("Image,", "");
+                            ImageAssetLogUnhashed.WriteLine(result);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case "Material":
-                {
-                    if(hash.Contains("xmaterial_"))
                     {
-                        //Hashed Materials
-                        result = result.Replace("xmaterial_","");
-                        MaterialAssetLog.WriteLine(result);
-                    }
-                    else
-                    {
-                        //Unhashed Materials
-                        MaterialAssetLogForUnhashing.WriteLine(result);
-                    }
+                        if (hash.Contains("Material,material_"))
+                        {
+                            //Hashed Materials
+                            result = hash.Replace("Material,material_", "");
+                            MaterialAssetLog.WriteLine(result);
+                        }
+                        else
+                        {
+                            //Unhashed Materials
+                            result = hash.Replace("Material,", "");
+                            MaterialAssetLogUnhashed.WriteLine(result);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case "Model":
-                {
-                    if(hash.Contains("xmodel_"))
                     {
-                        //Hashed Models
-                        result = result.Replace("xmodel_","");
-                        ModelAssetLog.WriteLine(result);
-                    }
-                    else
-                    {
-                        //Unhashed Models
-                        ModelAssetLogForUnhashing.WriteLine(result);
-                    }
+                        if (hash.Contains("Model,model_"))
+                        {
+                            //Hashed Models
+                            result = hash.Replace("Model,model_", "");
+                            ModelAssetLog.WriteLine(result);
+                        }
+                        else
+                        {
+                            //Unhashed Models
+                            result = hash.Replace("Model,", "");
+                            ModelAssetLogUnhashed.WriteLine(result);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
                 case "Sound":
-                {
-                    if(hash.Contains("xsound_"))
                     {
-                        //Hashed Sounds
-                        result = result.Replace("xsound_","");
-                        SoundAssetLog.WriteLine(result);
-                    }
-                    else
-                    {
-                        //Unhashed Sounds
-                        SoundAssetLogForUnhashing.WriteLine(result);
-                    }
+                        if (hash.Contains("Sound,sound_"))
+                        {
+                            //Hashed Sounds
+                            result = hash.Replace("Sound,sound_", "");
+                            SoundAssetLog.WriteLine(result);
+                        }
+                        else
+                        {
+                            //Unhashed Sounds
+                            result = hash.Replace("Sound,", "");
+                            SoundAssetLogUnhashed.WriteLine(result);
+                        }
 
-                    break;
-                }
+                        break;
+                    }
             }
         }
-    }
-
-    static void WordCombiner()
-    {
-        Console.WriteLine("Which asset type?\n");
-
-        string assetType = PickAssetType();
-        
-        //Console.WriteLine("Length?\n");
-
-        //int length = PickLength();
-
-        string[] WordsToCombine = File.ReadAllLines(@"Files\Shared\WordsToCombine.txt");
-        string[] MW6AssetLog = File.ReadAllLines(@"Files\Asset Logs\MW6" + assetType + "AssetLog.txt");
-        string[] T10AssetLog = File.ReadAllLines(@"Files\Asset Logs\T10" + assetType + "AssetLog.txt");
-
-        Console.WriteLine("Combining Words:\n");
-
-        Parallel.ForEach(WordsToCombine , word1 =>
-        {
-            Parallel.ForEach(WordsToCombine , word2 =>
-            {
-                Parallel.ForEach(WordsToCombine , word3 =>
-                {
-                    Parallel.ForEach(WordsToCombine , word4 =>
-                    {
-                        Parallel.ForEach(WordsToCombine , word5 =>
-                        {
-                            Parallel.ForEach(WordsToCombine , word6 =>
-                            {
-                                Parallel.ForEach(WordsToCombine , word7 =>
-                                {
-                                    Parallel.ForEach(WordsToCombine , word8 =>
-                                    {
-                                        string stringedName = word1 + "_" + word2 + "_" + word3 + "_" + word4 + "_" + word5 + "_" + word6 + "_" + word7 + "_" + word8;
-                                        if(assetType == "Material")
-                                        {
-                                            stringedName = "mo/" + stringedName;
-                                        }
-
-                                        string generatedHash = CalcHash(stringedName);
-
-                                        if(Globals.DebugToggle)
-                                        {
-                                            Console.WriteLine(stringedName + " | " + generatedHash);
-                                        }
-
-                                        Parallel.ForEach(MW6AssetLog , hashedAsset =>
-                                        {
-                                            if(hashedAsset == generatedHash)
-                                            {
-                                                Console.WriteLine(stringedName);
-                                            }
-                                        });
-
-                                        Parallel.ForEach(T10AssetLog , hashedAsset =>
-                                        {
-                                            if(hashedAsset == generatedHash)
-                                            {
-                                                Console.WriteLine(stringedName);
-                                            }
-                                        });
-                                    });
-                                });
-                            });
-                        });
-                    });
-                });
-            });
-        });
     }
 
     static void Hasher()
@@ -1995,7 +1989,8 @@ class CODHashFinder
             }
             else if(userResponse != null)
             {
-                Console.WriteLine(userResponse + " | " + CalcHash(userResponse));
+                Console.WriteLine("64bit: " + userResponse + " | " + CalcHash64(userResponse));
+                Console.WriteLine("32bit: " + userResponse + " | " + CalcHash32(userResponse));
             }
         }
     }

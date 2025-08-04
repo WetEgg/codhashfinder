@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("codhashfinder")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b53b919b6431b42f07b416249f44c47aa3a049a5")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+85d51c0c4af1926bd67e172237f284237b34276b")]
 [assembly: System.Reflection.AssemblyProductAttribute("codhashfinder")]
 [assembly: System.Reflection.AssemblyTitleAttribute("codhashfinder")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
